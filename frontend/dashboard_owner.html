@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Owner Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- NAVBAR -->
+<nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
+  <h1 class="text-xl font-bold">Vehicle Owner Dashboard</h1>
+  <button onclick="logout()" class="bg-red-500 px-4 py-1 rounded">
+    Logout
+  </button>
+</nav>
+
+<div class="p-6 max-w-5xl mx-auto space-y-6">
+
+  <!-- VEHICLE INPUT -->
+  <div class="bg-white p-6 rounded shadow">
+    <h2 class="text-lg font-semibold mb-4">Check Vehicle Maintenance Status</h2>
+
+    <input
+      id="vehicleNumber"
+      placeholder="Vehicle Number (e.g. BGT 2987)"
+      class="w-full mb-3 p-2 border rounded"
+    >
+
+    <input
+      id="currentMileage"
+      type="number"
+      placeholder="Current Mileage (KM)"
+      class="w-full mb-4 p-2 border rounded"
+    >
+
+    <button
+      onclick="loadVehicleStatus()"
+      class="bg-blue-600 text-white px-6 py-2 rounded font-semibold"
+    >
+      View Status
+    </button>
+  </div>
+
+  <!-- ALERTS -->
+  <div>
+    <h2 class="text-lg font-semibold mb-3">🚨 Maintenance Alerts</h2>
+    <div id="alerts" class="space-y-3"></div>
+  </div>
+
+  <!-- SERVICE HISTORY -->
+  <div>
+    <h2 class="text-lg font-semibold mb-3">📜 Service History</h2>
+    <div id="history" class="space-y-4"></div>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- AUTH CHECK ---------------- */
+const token = localStorage.getItem("token");
+if (!token) {
+  alert("Please login first");
+  window.location.href = "login.html";
+}
+
+/* ---------------- LOAD VEHICLE STATUS ---------------- */
+async function loadVehicleStatus() {
+  const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
+  const currentMileage = Number(document.getElementById("currentMileage").value);
+
+  const alertsDiv = document.getElementById("alerts");
+  const historyDiv = document.getElementById("history");
+
+  alertsDiv.innerHTML = "";
+  historyDiv.innerHTML = "";
+
+  if (!vehicleNumber || !currentMileage) {
+    alert("Please enter vehicle number and current mileage");
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `http://localhost:5001/api/services/${vehicleNumber}`,
+      {
+        headers: { Authorization: "Bearer " + token }
+      }
+    );
+
+    const services = await res.json();
+
+    if (!services.length) {
+      historyDiv.innerHTML =
+        "<p class='text-gray-600'>No service records found.</p>";
+      return;
+    }
+
+    /* -------- MAINTENANCE ALERTS -------- */
+    services[0].items.forEach(item => {
+      const remainingKm = item.nextCheckKm - currentMileage;
+
+      let boxClass = "bg-green-100 text-green-700";
+      let message = `Next check in ${remainingKm} km`;
+
+      if (remainingKm < 0) {
+        boxClass = "bg-red-100 text-red-700";
+        message = `Overdue by ${Math.abs(remainingKm)} km`;
+      } 
+      else if (remainingKm <= 1000) {
+        boxClass = "bg-yellow-100 text-yellow-800";
+        message = `Due in ${remainingKm} km`;
+      }
+
+      alertsDiv.innerHTML += `
+        <div class="p-4 rounded ${boxClass}">
+          <b>${item.component}</b>
+          <div class="text-sm mt-1">${message}</div>
+          <div class="text-xs text-gray-600">
+            Scheduled at ${item.nextCheckKm} km
+          </div>
+        </div>
+      `;
+    });
+
+    /* -------- SERVICE HISTORY -------- */
+    services.forEach(service => {
+      let itemsHtml = "";
+
+      service.items.forEach(i => {
+        itemsHtml += `
+          <li>
+            <b>${i.component}</b> — ${i.action}
+            (Next: ${i.nextCheckKm} km)
+          </li>
+        `;
+      });
+
+      historyDiv.innerHTML += `
+        <div class="bg-white p-4 rounded shadow">
+          <p><b>Date:</b> ${new Date(service.serviceDate).toDateString()}</p>
+          <p><b>Mileage at Service:</b> ${service.mileageAtService} km</p>
+          <ul class="list-disc pl-5 mt-2">${itemsHtml}</ul>
+        </div>
+      `;
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load vehicle data");
+  }
+}
+
+/* ---------------- LOGOUT ---------------- */
+function logout() {
+  localStorage.clear();
+  window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mechanic Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+
+<!-- TOP BAR -->
+<nav class="bg-green-700 text-white p-4">
+  <h1 class="text-xl font-bold">Mechanic Dashboard – Add Service Record</h1>
+</nav>
+
+<div class="max-w-4xl mx-auto p-6">
+
+  <!-- VEHICLE SEARCH -->
+  <div class="bg-white p-4 rounded shadow mb-6">
+    <label class="block font-semibold mb-2">Vehicle Registration Number</label>
+    <input
+      id="vehicleNumber"
+      placeholder="Ex: ABC-1234"
+      class="w-full p-2 border rounded">
+  </div>
+
+  <!-- MILEAGE -->
+  <div class="bg-white p-4 rounded shadow mb-6">
+    <label class="block font-semibold mb-2">Mileage at Service (KM)</label>
+    <input
+      id="mileageAtService"
+      type="number"
+      placeholder="Ex: 45200"
+      class="w-full p-2 border rounded">
+  </div>
+
+  <!-- COMPONENT CHECKLIST -->
+  <div class="bg-white p-6 rounded shadow mb-6">
+    <h2 class="text-lg font-bold mb-4">Service Checklist</h2>
+
+    <!-- COMPONENTS -->
+    <div id="components" class="space-y-4">
+
+      <!-- TEMPLATE START -->
+      <!-- ENGINE OIL -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Engine Oil & Oil Filter">
+          Engine Oil & Oil Filter
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- BRAKES -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Brake Pads & Discs">
+          Brake Pads & Discs
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- BRAKE FLUID -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Brake Fluid">
+          Brake Fluid
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- TYRES -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Tyres & Wheel Alignment">
+          Tyres & Wheel Alignment
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Rotated / Replaced">Rotated / Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- COOLANT -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Radiator Coolant & Hoses">
+          Radiator Coolant & Hoses
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- AIR FILTER -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Air Filter">
+          Air Filter
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- FUEL FILTER -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Fuel Filter">
+          Fuel Filter
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- SPARK / GLOW -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Spark Plugs / Glow Plugs">
+          Spark Plugs / Glow Plugs
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- BATTERY -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Battery & Charging System">
+          Battery & Charging System
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- GEARBOX -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Gearbox / Transmission Oil">
+          Gearbox / Transmission Oil
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+      <!-- CLUTCH -->
+      <div class="border p-3 rounded">
+        <label class="font-semibold">
+          <input type="checkbox" data-component="Clutch System">
+          Clutch System
+        </label>
+        <div class="component-details hidden mt-2">
+          <select class="action border p-1 rounded">
+            <option value="Checked">Checked</option>
+            <option value="Replaced">Replaced</option>
+          </select>
+          <input type="number" class="nextKm border p-1 rounded ml-2 w-40"
+            placeholder="Next check KM">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SAVE BUTTON -->
+  <button onclick="saveService()"
+    class="w-full bg-green-700 text-white py-3 rounded text-lg font-semibold">
+    Save Service Record
+  </button>
+
+  <div id="msg" class="mt-4 text-center"></div>
+
+</div>
+
+<!-- ADD VEHICLE FLOATING BUTTON -->
+<a href="add_vehicle.html"
+   class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700
+          text-white px-5 py-3 rounded-full shadow-lg
+          flex items-center gap-2 text-sm font-semibold">
+  ➕ Add Vehicle
+</a>
+
+<script>
+  // Toggle component details
+  document.querySelectorAll("#components input[type=checkbox]").forEach(cb => {
+    cb.addEventListener("change", () => {
+      cb.closest("div").querySelector(".component-details")
+        .classList.toggle("hidden", !cb.checked);
+    });
+  });
+
+  async function saveService() {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Please login again");
+      return;
+    }
+
+    const vehicleNumber = document.getElementById("vehicleNumber").value;
+    const mileageAtService = document.getElementById("mileageAtService").value;
+
+    if (!vehicleNumber || !mileageAtService) {
+      alert("Vehicle number and mileage required");
+      return;
+    }
+
+    const items = [];
+
+    document.querySelectorAll("#components > div").forEach(block => {
+      const checkbox = block.querySelector("input[type=checkbox]");
+      if (checkbox.checked) {
+        const action = block.querySelector(".action").value;
+        const nextKm = block.querySelector(".nextKm").value;
+
+        if (!nextKm) {
+          alert("Enter next check KM for selected items");
+          return;
+        }
+
+        items.push({
+          component: checkbox.dataset.component,
+          action,
+          nextCheckKm: Number(nextKm)
+        });
+      }
+    });
+
+    if (items.length === 0) {
+      alert("Select at least one service item");
+      return;
+    }
+
+    const res = await fetch("http://localhost:5001/api/services", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        vehicleNumber,
+        mileageAtService,
+        items
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Failed to save service");
+      return;
+    }
+
+    document.getElementById("msg").innerHTML =
+      "<span class='text-green-700 font-semibold'>Service saved successfully</span>";
+  }
+</script>
+
+</body>
+</html>

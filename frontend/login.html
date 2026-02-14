@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+  <div class="bg-white p-8 rounded shadow w-96">
+    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+
+    <input
+      id="email"
+      type="email"
+      placeholder="Email"
+      class="w-full mb-3 p-2 border rounded"
+    />
+
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+      class="w-full mb-4 p-2 border rounded"
+    />
+
+    <button
+      onclick="loginUser()"
+      class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+    >
+      Login
+    </button>
+  </div>
+
+  <script>
+    async function loginUser() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        alert("Enter email and password");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5001/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Login failed");
+          return;
+        }
+
+        // Save token & user
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // Role-based redirect
+        if (data.user.role === "mechanic") {
+          window.location.href = "mechanic-dashboard.html";
+        } else {
+          window.location.href = "dashboard_owner.html";
+        }
+
+      } catch (err) {
+        alert("Server error");
+        console.error(err);
+      }
+    }
+  </script>
+
+</body>
+</html>
