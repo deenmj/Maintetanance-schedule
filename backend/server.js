@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
@@ -13,9 +14,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Test route (VERY IMPORTANT)
+// Serve static files from the frontend directory
+const frontendPath = path.resolve(__dirname, "../frontend");
+app.use(express.static(frontendPath));
+
+// Redirect root to login page
 app.get("/", (req, res) => {
-  res.send("Backend is working");
+  res.sendFile(path.join(frontendPath, "login.html"));
 });
 
 // API Routes

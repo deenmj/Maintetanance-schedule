@@ -83,7 +83,7 @@ async function loadVehicleStatus() {
 
   try {
     const res = await fetch(
-      `http://localhost:5001/api/services/${vehicleNumber}`,
+      `/api/services/${vehicleNumber}`,
       {
         headers: { Authorization: "Bearer " + token }
       }
