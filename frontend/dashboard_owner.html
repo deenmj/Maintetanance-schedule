@@ -142,6 +142,7 @@
   /* ── LOAD VEHICLE STATUS ── */
   let currentVehicleNumber = "";
   let currentMileageVal = 0;
+  let ownerServicesCache = [];
 
   async function loadVehicleStatus() {
     const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
@@ -176,6 +177,7 @@
 
       const services = await servicesRes.json();
       const costData = await costsRes.json();
+      ownerServicesCache = services;
 
       if (!services.length) {
         document.getElementById("alertsSection").style.display = "none";
@@ -295,7 +297,7 @@
       /* ── SERVICE HISTORY (with costs) ── */
       document.getElementById("historySection").style.display = "block";
 
-      services.forEach(service => {
+      services.forEach((service, idx) => {
         const mechanicName = service.mechanicId && service.mechanicId.name
           ? service.mechanicId.name
           : "Unknown";
@@ -327,7 +329,10 @@
                 <span class="history-date">📅 ${new Date(service.serviceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                 <span class="mechanic-tag">🔧 ${mechanicName}</span>
               </div>
-              <span class="history-mileage">${service.mileageAtService.toLocaleString()} km</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="history-mileage">${service.mileageAtService.toLocaleString()} km</span>
+                <button onclick="printSingleBill(${idx})" class="btn btn-ghost" style="padding: 4px 8px; font-size: 12px; min-width: auto; height: auto;">🖨️ Print Bill</button>
+              </div>
             </div>
             <ul class="history-items">${itemsHtml}</ul>
             <div class="cost-summary-bar">
@@ -355,6 +360,99 @@
     document.getElementById("printDate").textContent = "Printed: " + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
     window.print();
+  }
+
+  function printSingleBill(idx) {
+    const service = ownerServicesCache[idx];
+    if (!service) return;
+
+    const mechanicName = service.mechanicId && service.mechanicId.name ? service.mechanicId.name : "Unknown";
+    let itemsHtml = '';
+    let partsTotal = 0;
+    
+    service.items.forEach(i => {
+       const cost = i.partCost || 0;
+       if (i.action === 'Replaced') partsTotal += cost;
+       
+       itemsHtml += `
+         <tr style="border-bottom: 1px solid #ddd;">
+           <td style="padding: 12px 0;">${i.component}</td>
+           <td style="padding: 12px 0; text-align: center;">${i.action}</td>
+           <td style="padding: 12px 0; text-align: right;">${cost > 0 ? cost.toFixed(2) : '-'}</td>
+         </tr>
+       `;
+    });
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; color: #000; padding: 40px; background: white;">
+        <div style="text-align: center; margin-bottom: 40px; border-bottom: 2px solid #000; padding-bottom: 20px;">
+          <h1 style="margin: 0; font-size: 28px;">ABC Fleet Maintenance</h1>
+          <p style="margin: 4px 0 0; color: #555;">Service Invoice</p>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
+          <div>
+            <p style="margin: 4px 0;"><strong>Vehicle:</strong> ${service.vehicleNumber}</p>
+            <p style="margin: 4px 0;"><strong>Mileage:</strong> ${service.mileageAtService.toLocaleString()} km</p>
+            <p style="margin: 4px 0;"><strong>Owner:</strong> ${user.name || "—"}</p>
+          </div>
+          <div style="text-align: right;">
+            <p style="margin: 4px 0;"><strong>Date:</strong> ${new Date(service.serviceDate).toLocaleDateString()}</p>
+            <p style="margin: 4px 0;"><strong>Mechanic:</strong> ${mechanicName}</p>
+          </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px;">
+          <thead>
+            <tr style="border-bottom: 2px solid #000;">
+              <th style="padding: 12px 0; text-align: left;">Component</th>
+              <th style="padding: 12px 0; text-align: center;">Action</th>
+              <th style="padding: 12px 0; text-align: right;">Cost (LKR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <div style="width: 300px; margin-left: auto;">
+          <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+            <span>Parts Total:</span>
+            <span>${partsTotal.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 8px 0;">
+            <span>Labor Cost:</span>
+            <span>${(service.laborCost || 0).toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 12px 0; border-top: 2px solid #000; font-weight: bold; font-size: 18px;">
+            <span>Grand Total:</span>
+            <span>${(service.totalCost || 0).toFixed(2)} LKR</span>
+          </div>
+        </div>
+        
+        <div style="margin-top: 60px; text-align: center; color: #666; font-size: 12px;">
+          <p>Thank you for choosing ABC Fleet Maintenance!</p>
+        </div>
+      </div>
+    `;
+
+    let printArea = document.getElementById('printInvoiceArea');
+    if (!printArea) {
+      printArea = document.createElement('div');
+      printArea.id = 'printInvoiceArea';
+      document.body.appendChild(printArea);
+    }
+    
+    printArea.innerHTML = html;
+    printArea.style.display = 'block';
+
+    const wrapper = document.querySelector('.page-wrapper');
+    wrapper.style.display = 'none';
+
+    window.print();
+
+    wrapper.style.display = '';
+    printArea.style.display = 'none';
   }
 
   /* ── LOGOUT ── */
