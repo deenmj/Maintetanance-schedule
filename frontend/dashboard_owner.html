@@ -237,25 +237,25 @@
         <div class="cost-card lifetime">
           <div class="cost-card-icon">🏷️</div>
           <div class="cost-card-value">${costData.totalLifetimeCost.toFixed(2)}</div>
-          <div class="cost-card-label">Lifetime Total (OMR)</div>
+          <div class="cost-card-label">Lifetime Total (LKR)</div>
           <div class="cost-card-sub">Across ${costData.serviceCount} services</div>
         </div>
         <div class="cost-card parts">
           <div class="cost-card-icon">🔩</div>
           <div class="cost-card-value">${costData.totalPartsCost.toFixed(2)}</div>
-          <div class="cost-card-label">Parts Cost (OMR)</div>
+          <div class="cost-card-label">Parts Cost (LKR)</div>
           <div class="cost-card-sub">${((costData.totalPartsCost / (costData.totalLifetimeCost || 1)) * 100).toFixed(0)}% of total</div>
         </div>
         <div class="cost-card labor">
           <div class="cost-card-icon">🛠️</div>
           <div class="cost-card-value">${costData.totalLaborCost.toFixed(2)}</div>
-          <div class="cost-card-label">Labor Cost (OMR)</div>
+          <div class="cost-card-label">Labor Cost (LKR)</div>
           <div class="cost-card-sub">${((costData.totalLaborCost / (costData.totalLifetimeCost || 1)) * 100).toFixed(0)}% of total</div>
         </div>
         <div class="cost-card average">
           <div class="cost-card-icon">📊</div>
           <div class="cost-card-value">${costData.serviceCount > 0 ? (costData.totalLifetimeCost / costData.serviceCount).toFixed(2) : '0.00'}</div>
-          <div class="cost-card-label">Avg per Service (OMR)</div>
+          <div class="cost-card-label">Avg per Service (LKR)</div>
           <div class="cost-card-sub">Cost efficiency metric</div>
         </div>
       `;
@@ -308,7 +308,7 @@
             ? `<span class="action-badge replaced">Replaced</span>`
             : `<span class="action-badge checked">Checked</span>`;
           const costTag = i.partCost > 0
-            ? `<span class="cost-tag">${i.partCost.toFixed(2)} OMR</span>`
+            ? `<span class="cost-tag">${i.partCost.toFixed(2)} LKR</span>`
             : '';
           itemsHtml += `
             <li>
@@ -331,9 +331,9 @@
             </div>
             <ul class="history-items">${itemsHtml}</ul>
             <div class="cost-summary-bar">
-              <span>Parts: <strong>${partsCost.toFixed(2)} OMR</strong></span>
-              <span>Labor: <strong>${(service.laborCost || 0).toFixed(2)} OMR</strong></span>
-              <span class="cost-total">Total: <strong>${(service.totalCost || 0).toFixed(2)} OMR</strong></span>
+              <span>Parts: <strong>${partsCost.toFixed(2)} LKR</strong></span>
+              <span>Labor: <strong>${(service.laborCost || 0).toFixed(2)} LKR</strong></span>
+              <span class="cost-total">Total: <strong>${(service.totalCost || 0).toFixed(2)} LKR</strong></span>
             </div>
           </div>
         `;

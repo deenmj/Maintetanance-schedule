@@ -80,7 +80,7 @@ async function seed() {
   console.log(`🚗  Created ${vehicles.length} vehicles`);
 
   /* ══════════════════════════════════════
-     3. SERVICE RECORDS (with costs in OMR)
+     3. SERVICE RECORDS (with costs in LKR)
   ══════════════════════════════════════ */
 
   // ── BGT 2987 – Service 1 (older) ──
