@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Owner Dashboard — ABC Fleet Maintenance</title>
-  <meta name="description" content="Vehicle owner dashboard for monitoring maintenance status and service history" />
+  <meta name="description" content="Vehicle owner dashboard for monitoring maintenance status, costs, and service history" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -35,7 +35,7 @@
     <!-- Page Title -->
     <div class="animate-in" style="margin-bottom: 32px;">
       <h1 style="font-size: 28px; font-weight: 800; color: var(--text-primary);">Vehicle Status</h1>
-      <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Monitor your fleet's maintenance health in real time</p>
+      <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Monitor your fleet's maintenance health, costs, and service history</p>
     </div>
 
     <!-- VEHICLE LOOKUP -->
@@ -72,6 +72,15 @@
     <!-- STATS (populated dynamically) -->
     <div id="statsGrid" class="stats-grid" style="display: none;"></div>
 
+    <!-- LIFETIME COST CARD -->
+    <div id="costSection" style="display: none; margin-bottom: 28px;" class="animate-in">
+      <div class="section-header">
+        <span class="icon">💰</span>
+        <h2>Lifetime Cost Summary</h2>
+      </div>
+      <div id="costCards" class="cost-cards-grid"></div>
+    </div>
+
     <!-- ALERTS -->
     <div id="alertsSection" style="display: none;" class="animate-in">
       <div class="section-header">
@@ -100,7 +109,7 @@
 <!-- Print-only header (hidden on screen) -->
 <div id="printHeader" class="print-header">
   <div class="print-logo">ABC Fleet Maintenance</div>
-  <div class="print-report-title">Vehicle Service Report</div>
+  <div class="print-report-title">Vehicle Service & Cost Report</div>
   <div class="print-meta">
     <span id="printVehicle"></span>
     <span id="printOwner"></span>
@@ -142,6 +151,7 @@
     const alertsDiv = document.getElementById("alerts");
     const historyDiv = document.getElementById("history");
     const statsGrid = document.getElementById("statsGrid");
+    const costSection = document.getElementById("costSection");
 
     alertsDiv.innerHTML = "";
     historyDiv.innerHTML = "";
@@ -158,16 +168,19 @@
     btn.disabled = true;
 
     try {
-      const res = await fetch(
-        `/api/services/${vehicleNumber}`,
-        { headers: { Authorization: "Bearer " + token } }
-      );
+      // Fetch services and cost summary in parallel
+      const [servicesRes, costsRes] = await Promise.all([
+        fetch(`/api/services/${vehicleNumber}`, { headers: { Authorization: "Bearer " + token } }),
+        fetch(`/api/services/costs/${vehicleNumber}`, { headers: { Authorization: "Bearer " + token } })
+      ]);
 
-      const services = await res.json();
+      const services = await servicesRes.json();
+      const costData = await costsRes.json();
 
       if (!services.length) {
         document.getElementById("alertsSection").style.display = "none";
         document.getElementById("historySection").style.display = "block";
+        costSection.style.display = "none";
         statsGrid.style.display = "none";
         document.getElementById("printBtn").style.display = "none";
         historyDiv.innerHTML = `
@@ -217,6 +230,36 @@
         </div>
       `;
 
+      /* ── LIFETIME COST SUMMARY ── */
+      costSection.style.display = "block";
+      const costCardsDiv = document.getElementById("costCards");
+      costCardsDiv.innerHTML = `
+        <div class="cost-card lifetime">
+          <div class="cost-card-icon">🏷️</div>
+          <div class="cost-card-value">${costData.totalLifetimeCost.toFixed(2)}</div>
+          <div class="cost-card-label">Lifetime Total (OMR)</div>
+          <div class="cost-card-sub">Across ${costData.serviceCount} services</div>
+        </div>
+        <div class="cost-card parts">
+          <div class="cost-card-icon">🔩</div>
+          <div class="cost-card-value">${costData.totalPartsCost.toFixed(2)}</div>
+          <div class="cost-card-label">Parts Cost (OMR)</div>
+          <div class="cost-card-sub">${((costData.totalPartsCost / (costData.totalLifetimeCost || 1)) * 100).toFixed(0)}% of total</div>
+        </div>
+        <div class="cost-card labor">
+          <div class="cost-card-icon">🛠️</div>
+          <div class="cost-card-value">${costData.totalLaborCost.toFixed(2)}</div>
+          <div class="cost-card-label">Labor Cost (OMR)</div>
+          <div class="cost-card-sub">${((costData.totalLaborCost / (costData.totalLifetimeCost || 1)) * 100).toFixed(0)}% of total</div>
+        </div>
+        <div class="cost-card average">
+          <div class="cost-card-icon">📊</div>
+          <div class="cost-card-value">${costData.serviceCount > 0 ? (costData.totalLifetimeCost / costData.serviceCount).toFixed(2) : '0.00'}</div>
+          <div class="cost-card-label">Avg per Service (OMR)</div>
+          <div class="cost-card-sub">Cost efficiency metric</div>
+        </div>
+      `;
+
       /* ── ALERTS ── */
       document.getElementById("alertsSection").style.display = "block";
 
@@ -249,7 +292,7 @@
         `;
       });
 
-      /* ── SERVICE HISTORY ── */
+      /* ── SERVICE HISTORY (with costs) ── */
       document.getElementById("historySection").style.display = "block";
 
       services.forEach(service => {
@@ -257,15 +300,21 @@
           ? service.mechanicId.name
           : "Unknown";
 
+        const partsCost = service.items.reduce((sum, i) => sum + (i.partCost || 0), 0);
+
         let itemsHtml = "";
         service.items.forEach(i => {
           const actionBadge = i.action === "Replaced"
             ? `<span class="action-badge replaced">Replaced</span>`
             : `<span class="action-badge checked">Checked</span>`;
+          const costTag = i.partCost > 0
+            ? `<span class="cost-tag">${i.partCost.toFixed(2)} OMR</span>`
+            : '';
           itemsHtml += `
             <li>
               <strong>${i.component}</strong>
               ${actionBadge}
+              ${costTag}
               <span class="next-km-tag">Next: ${i.nextCheckKm.toLocaleString()} km</span>
             </li>
           `;
@@ -281,6 +330,11 @@
               <span class="history-mileage">${service.mileageAtService.toLocaleString()} km</span>
             </div>
             <ul class="history-items">${itemsHtml}</ul>
+            <div class="cost-summary-bar">
+              <span>Parts: <strong>${partsCost.toFixed(2)} OMR</strong></span>
+              <span>Labor: <strong>${(service.laborCost || 0).toFixed(2)} OMR</strong></span>
+              <span class="cost-total">Total: <strong>${(service.totalCost || 0).toFixed(2)} OMR</strong></span>
+            </div>
           </div>
         `;
       });

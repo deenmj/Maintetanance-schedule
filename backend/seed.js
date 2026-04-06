@@ -4,7 +4,7 @@
  * ═══════════════════════════════════════════════════
  *
  *  Creates demo users, vehicles, and service records
- *  so the application has data to demonstrate.
+ *  (with realistic costs) so the application has data.
  *
  *  Usage:  node seed.js
  * ═══════════════════════════════════════════════════
@@ -80,7 +80,7 @@ async function seed() {
   console.log(`🚗  Created ${vehicles.length} vehicles`);
 
   /* ══════════════════════════════════════
-     3. SERVICE RECORDS
+     3. SERVICE RECORDS (with costs in OMR)
   ══════════════════════════════════════ */
 
   // ── BGT 2987 – Service 1 (older) ──
@@ -89,11 +89,12 @@ async function seed() {
     mileageAtService: 40000,
     serviceDate: new Date("2025-08-15"),
     mechanicId: mechanic1._id,
+    laborCost: 25,
     items: [
-      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 45000 },
-      { component: "Brake Pads & Discs",           action: "Checked",   nextCheckKm: 55000 },
-      { component: "Air Filter",                   action: "Replaced",  nextCheckKm: 50000 },
-      { component: "Battery & Charging System",    action: "Checked",   nextCheckKm: 60000 },
+      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 45000, partCost: 18 },
+      { component: "Brake Pads & Discs",           action: "Checked",   nextCheckKm: 55000, partCost: 0 },
+      { component: "Air Filter",                   action: "Replaced",  nextCheckKm: 50000, partCost: 8 },
+      { component: "Battery & Charging System",    action: "Checked",   nextCheckKm: 60000, partCost: 0 },
     ]
   });
 
@@ -103,13 +104,14 @@ async function seed() {
     mileageAtService: 45000,
     serviceDate: new Date("2026-01-20"),
     mechanicId: mechanic1._id,
+    laborCost: 35,
     items: [
-      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 50000 },
-      { component: "Brake Pads & Discs",           action: "Checked",   nextCheckKm: 55000 },
-      { component: "Tyres & Wheel Alignment",      action: "Checked",   nextCheckKm: 48000 },  // will be OVERDUE
-      { component: "Radiator Coolant & Hoses",     action: "Replaced",  nextCheckKm: 60000 },
-      { component: "Fuel Filter",                  action: "Replaced",  nextCheckKm: 55000 },
-      { component: "Spark Plugs / Glow Plugs",     action: "Checked",   nextCheckKm: 49000 },  // will be DUE SOON
+      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 50000, partCost: 18 },
+      { component: "Brake Pads & Discs",           action: "Checked",   nextCheckKm: 55000, partCost: 0 },
+      { component: "Tyres & Wheel Alignment",      action: "Checked",   nextCheckKm: 48000, partCost: 0 },
+      { component: "Radiator Coolant & Hoses",     action: "Replaced",  nextCheckKm: 60000, partCost: 12 },
+      { component: "Fuel Filter",                  action: "Replaced",  nextCheckKm: 55000, partCost: 6 },
+      { component: "Spark Plugs / Glow Plugs",     action: "Checked",   nextCheckKm: 49000, partCost: 0 },
     ]
   });
 
@@ -119,12 +121,13 @@ async function seed() {
     mileageAtService: 70000,
     serviceDate: new Date("2026-02-10"),
     mechanicId: mechanic2._id,
+    laborCost: 45,
     items: [
-      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 75000 },
-      { component: "Brake Pads & Discs",           action: "Replaced",  nextCheckKm: 90000 },
-      { component: "Brake Fluid",                  action: "Replaced",  nextCheckKm: 80000 },
-      { component: "Gearbox / Transmission Oil",   action: "Checked",   nextCheckKm: 85000 },
-      { component: "Battery & Charging System",    action: "Replaced",  nextCheckKm: 100000 },
+      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 75000, partCost: 22 },
+      { component: "Brake Pads & Discs",           action: "Replaced",  nextCheckKm: 90000, partCost: 65 },
+      { component: "Brake Fluid",                  action: "Replaced",  nextCheckKm: 80000, partCost: 8 },
+      { component: "Gearbox / Transmission Oil",   action: "Checked",   nextCheckKm: 85000, partCost: 0 },
+      { component: "Battery & Charging System",    action: "Replaced",  nextCheckKm: 100000, partCost: 45 },
     ]
   });
 
@@ -134,11 +137,12 @@ async function seed() {
     mileageAtService: 20000,
     serviceDate: new Date("2026-03-05"),
     mechanicId: mechanic1._id,
+    laborCost: 20,
     items: [
-      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 25000 },
-      { component: "Air Filter",                   action: "Checked",   nextCheckKm: 30000 },
-      { component: "Tyres & Wheel Alignment",      action: "Checked",   nextCheckKm: 22000 },  // OVERDUE
-      { component: "Clutch System",                action: "Checked",   nextCheckKm: 40000 },
+      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 25000, partCost: 16 },
+      { component: "Air Filter",                   action: "Checked",   nextCheckKm: 30000, partCost: 0 },
+      { component: "Tyres & Wheel Alignment",      action: "Checked",   nextCheckKm: 22000, partCost: 0 },
+      { component: "Clutch System",                action: "Checked",   nextCheckKm: 40000, partCost: 0 },
     ]
   });
 
@@ -148,16 +152,17 @@ async function seed() {
     mileageAtService: 35000,
     serviceDate: new Date("2025-12-01"),
     mechanicId: mechanic2._id,
+    laborCost: 30,
     items: [
-      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 40000 },
-      { component: "Brake Pads & Discs",           action: "Checked",   nextCheckKm: 38000 },  // OVERDUE
-      { component: "Radiator Coolant & Hoses",     action: "Checked",   nextCheckKm: 45000 },
-      { component: "Fuel Filter",                  action: "Replaced",  nextCheckKm: 45000 },
-      { component: "Spark Plugs / Glow Plugs",     action: "Replaced",  nextCheckKm: 50000 },
+      { component: "Engine Oil & Oil Filter",     action: "Replaced",  nextCheckKm: 40000, partCost: 18 },
+      { component: "Brake Pads & Discs",           action: "Checked",   nextCheckKm: 38000, partCost: 0 },
+      { component: "Radiator Coolant & Hoses",     action: "Checked",   nextCheckKm: 45000, partCost: 0 },
+      { component: "Fuel Filter",                  action: "Replaced",  nextCheckKm: 45000, partCost: 6 },
+      { component: "Spark Plugs / Glow Plugs",     action: "Replaced",  nextCheckKm: 50000, partCost: 14 },
     ]
   });
 
-  console.log("🔧  Created 5 service records across multiple vehicles\n");
+  console.log("🔧  Created 5 service records with costs across multiple vehicles\n");
 
   /* ── SUMMARY ── */
   console.log("═══════════════════════════════════════════════");

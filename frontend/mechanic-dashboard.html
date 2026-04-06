@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mechanic Dashboard — ABC Fleet Maintenance</title>
-  <meta name="description" content="Mechanic dashboard for logging vehicle service records and viewing service history" />
+  <meta name="description" content="Mechanic dashboard for logging vehicle service records with costs" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -35,7 +35,7 @@
     <!-- Page Title -->
     <div class="animate-in" style="margin-bottom: 32px;">
       <h1 style="font-size: 28px; font-weight: 800; color: var(--text-primary);">Mechanic Workshop</h1>
-      <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Log services and review your service history</p>
+      <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Log services, record costs, and review your service history</p>
     </div>
 
     <!-- TAB NAVIGATION -->
@@ -76,12 +76,12 @@
       </div>
 
       <!-- SERVICE CHECKLIST -->
-      <div class="card animate-in animate-in-delay-3" style="margin-bottom: 28px;">
+      <div class="card animate-in animate-in-delay-3" style="margin-bottom: 24px;">
         <div class="card-header">
           <div class="card-icon green">✅</div>
           <div>
             <div class="card-title">Service Checklist</div>
-            <div class="card-description">Select components that were serviced and set the next check interval</div>
+            <div class="card-description">Select components, set next check interval, and enter part costs for replacements</div>
           </div>
         </div>
 
@@ -98,7 +98,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -113,7 +116,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -128,7 +134,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -143,7 +152,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -158,7 +170,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -173,7 +188,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -188,7 +206,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -203,7 +224,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -218,7 +242,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -233,7 +260,10 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
@@ -248,10 +278,39 @@
                 <option value="Checked">Checked</option>
                 <option value="Replaced">Replaced</option>
               </select>
-              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+              <input type="number" class="nextKm form-input" style="max-width: 180px;" placeholder="Next check KM" />
+              <div class="cost-field hidden">
+                <input type="number" step="0.01" min="0" class="partCost form-input cost-input" placeholder="Part cost (OMR)" />
+              </div>
             </div>
           </div>
 
+        </div>
+      </div>
+
+      <!-- LABOR COST & SUMMARY -->
+      <div class="card animate-in animate-in-delay-4" style="margin-bottom: 28px;">
+        <div class="card-header">
+          <div class="card-icon amber">💰</div>
+          <div>
+            <div class="card-title">Service Cost Summary</div>
+            <div class="card-description">Enter labor charges — parts total is calculated automatically</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="laborCost">Labor Cost (OMR)</label>
+            <input id="laborCost" type="number" step="0.01" min="0" placeholder="e.g. 25.00" class="form-input" oninput="updateCostPreview()" />
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Parts Total (OMR)</label>
+            <div class="cost-preview-box" id="partsTotalPreview">0.00</div>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Grand Total (OMR)</label>
+            <div class="cost-preview-box grand-total" id="grandTotalPreview">0.00</div>
+          </div>
         </div>
       </div>
 
@@ -273,7 +332,7 @@
           <div class="card-icon violet">📋</div>
           <div>
             <div class="card-title">My Service Logs</div>
-            <div class="card-description">View all service records you have logged</div>
+            <div class="card-description">View all service records and costs you have logged</div>
           </div>
         </div>
 
@@ -366,15 +425,56 @@
     }
   }
 
-  /* ── Toggle component details ── */
+  /* ── Toggle component details + cost field ── */
   document.querySelectorAll("#components input[type=checkbox]").forEach(cb => {
     cb.addEventListener("change", () => {
       const details = cb.closest(".checklist-item").querySelector(".component-details");
       const item = cb.closest(".checklist-item");
       details.classList.toggle("hidden", !cb.checked);
       item.classList.toggle("checked", cb.checked);
+      updateCostPreview();
     });
   });
+
+  // Show/hide cost field based on action (Replaced vs Checked)
+  document.querySelectorAll("#components .action").forEach(sel => {
+    sel.addEventListener("change", () => {
+      const costField = sel.closest(".component-details").querySelector(".cost-field");
+      if (sel.value === "Replaced") {
+        costField.classList.remove("hidden");
+      } else {
+        costField.classList.add("hidden");
+        costField.querySelector(".partCost").value = "";
+      }
+      updateCostPreview();
+    });
+  });
+
+  // Listen for cost input changes
+  document.querySelectorAll("#components .partCost").forEach(input => {
+    input.addEventListener("input", updateCostPreview);
+  });
+
+  /* ── LIVE COST PREVIEW ── */
+  function updateCostPreview() {
+    let partsTotal = 0;
+    document.querySelectorAll("#components > .checklist-item").forEach(block => {
+      const checkbox = block.querySelector("input[type=checkbox]");
+      if (checkbox.checked) {
+        const action = block.querySelector(".action").value;
+        if (action === "Replaced") {
+          const cost = parseFloat(block.querySelector(".partCost").value) || 0;
+          partsTotal += cost;
+        }
+      }
+    });
+
+    const laborCost = parseFloat(document.getElementById("laborCost").value) || 0;
+    const grandTotal = partsTotal + laborCost;
+
+    document.getElementById("partsTotalPreview").textContent = partsTotal.toFixed(2);
+    document.getElementById("grandTotalPreview").textContent = grandTotal.toFixed(2);
+  }
 
   /* ── SAVE SERVICE ── */
   async function saveService() {
@@ -385,6 +485,7 @@
 
     const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
     const mileageAtService = document.getElementById("mileageAtService").value;
+    const laborCost = parseFloat(document.getElementById("laborCost").value) || 0;
     const btn = document.getElementById("saveBtn");
 
     if (!vehicleNumber || !mileageAtService) {
@@ -400,16 +501,23 @@
       if (checkbox.checked) {
         const action = block.querySelector(".action").value;
         const nextKm = block.querySelector(".nextKm").value;
+        const partCostInput = block.querySelector(".partCost");
+        let partCost = 0;
 
         if (!nextKm) {
           hasError = true;
           return;
         }
 
+        if (action === "Replaced") {
+          partCost = parseFloat(partCostInput.value) || 0;
+        }
+
         items.push({
           component: checkbox.dataset.component,
           action,
-          nextCheckKm: Number(nextKm)
+          nextCheckKm: Number(nextKm),
+          partCost
         });
       }
     });
@@ -434,7 +542,7 @@
           "Content-Type": "application/json",
           "Authorization": "Bearer " + token
         },
-        body: JSON.stringify({ vehicleNumber, mileageAtService, items })
+        body: JSON.stringify({ vehicleNumber, mileageAtService, items, laborCost })
       });
 
       const data = await res.json();
@@ -446,17 +554,24 @@
         return;
       }
 
-      showToast("Service record saved successfully!");
+      showToast("Service record saved — Total: " + (data.totalCost || 0).toFixed(2) + " OMR");
 
       // Reset form
       setTimeout(() => {
         document.getElementById("vehicleNumber").value = "";
         document.getElementById("mileageAtService").value = "";
+        document.getElementById("laborCost").value = "";
         document.querySelectorAll("#components input[type=checkbox]").forEach(cb => {
           cb.checked = false;
           cb.closest(".checklist-item").classList.remove("checked");
-          cb.closest(".checklist-item").querySelector(".component-details").classList.add("hidden");
+          const details = cb.closest(".checklist-item").querySelector(".component-details");
+          details.classList.add("hidden");
+          details.querySelector(".action").value = "Checked";
+          details.querySelector(".nextKm").value = "";
+          details.querySelector(".partCost").value = "";
+          details.querySelector(".cost-field").classList.add("hidden");
         });
+        updateCostPreview();
         btn.textContent = "💾 Save Service Record";
         btn.disabled = false;
       }, 1000);
@@ -515,7 +630,7 @@
       const uniqueVehicles = [...new Set(services.map(s => s.vehicleNumber))];
       const totalComponents = services.reduce((sum, s) => sum + s.items.length, 0);
       const replacedCount = services.reduce((sum, s) => sum + s.items.filter(i => i.action === "Replaced").length, 0);
-      const checkedCount = totalComponents - replacedCount;
+      const totalRevenue = services.reduce((sum, s) => sum + (s.totalCost || 0), 0);
 
       statsGrid.style.display = "grid";
       statsGrid.innerHTML = `
@@ -532,23 +647,29 @@
           <div class="stat-label">Parts Replaced</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${checkedCount}</div>
-          <div class="stat-label">Parts Checked</div>
+          <div class="stat-value" style="background: linear-gradient(135deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${totalRevenue.toFixed(2)}</div>
+          <div class="stat-label">Total Revenue (OMR)</div>
         </div>
       `;
 
       // Render history cards
       listDiv.innerHTML = "";
       services.forEach((service, idx) => {
+        const partsCost = service.items.reduce((sum, i) => sum + (i.partCost || 0), 0);
+
         let itemsHtml = "";
         service.items.forEach(i => {
           const actionBadge = i.action === "Replaced"
             ? `<span class="action-badge replaced">Replaced</span>`
             : `<span class="action-badge checked">Checked</span>`;
+          const costTag = i.partCost > 0
+            ? `<span class="cost-tag">${i.partCost.toFixed(2)} OMR</span>`
+            : '';
           itemsHtml += `
             <li>
               <strong>${i.component}</strong>
               ${actionBadge}
+              ${costTag}
               <span class="next-km-tag">Next: ${i.nextCheckKm.toLocaleString()} km</span>
             </li>
           `;
@@ -564,6 +685,11 @@
               <span class="history-mileage">${service.mileageAtService.toLocaleString()} km</span>
             </div>
             <ul class="history-items">${itemsHtml}</ul>
+            <div class="cost-summary-bar">
+              <span>Parts: <strong>${partsCost.toFixed(2)} OMR</strong></span>
+              <span>Labor: <strong>${(service.laborCost || 0).toFixed(2)} OMR</strong></span>
+              <span class="cost-total">Total: <strong>${(service.totalCost || 0).toFixed(2)} OMR</strong></span>
+            </div>
           </div>
         `;
       });

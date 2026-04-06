@@ -993,6 +993,130 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════
+   COST STYLES
+   ═══════════════════════════════════════════ */
+.cost-input {
+  max-width: 140px;
+  background: rgba(251, 191, 36, 0.05);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.cost-input:focus {
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
+}
+
+.cost-preview-box {
+  background: var(--bg-card-hover);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+.cost-preview-box.grand-total {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: var(--accent-emerald);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.cost-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-amber);
+  margin-left: 8px;
+}
+
+.cost-summary-bar {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.cost-summary-bar span strong {
+  color: var(--text-secondary);
+}
+
+.cost-summary-bar .cost-total strong {
+  font-size: 14px;
+  color: var(--accent-amber);
+}
+
+/* Lifetime cost cards */
+.cost-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.cost-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+}
+
+.cost-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-glow);
+  box-shadow: var(--shadow-glow);
+}
+
+.cost-card.lifetime {
+  background: linear-gradient(145deg, rgba(56, 189, 248, 0.1), rgba(167, 139, 250, 0.05));
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+.cost-card-icon {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.cost-card-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  font-family: 'Inter', sans-serif;
+}
+
+.cost-card.lifetime .cost-card-value {
+  color: var(--accent-violet);
+}
+
+.cost-card-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.cost-card-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════
    PRINT-ONLY HEADER
    (hidden on screen, visible when printing)
    ═══════════════════════════════════════════ */
@@ -1273,6 +1397,45 @@ body::before {
   /* Hide the lookup card on owner print */
   #printBtn {
     display: none !important;
+  }
+
+  /* Cost styling for print */
+  .cost-tag {
+    border: 1px solid #ccc !important;
+    background: #fdfdfd !important;
+    color: #333 !important;
+    -webkit-text-fill-color: #333 !important;
+  }
+
+  .cost-summary-bar {
+    border-top: 1px solid #eee !important;
+    color: #555 !important;
+    -webkit-text-fill-color: #555 !important;
+  }
+
+  .cost-summary-bar span strong,
+  .cost-summary-bar .cost-total strong {
+    color: #1a1a1a !important;
+    -webkit-text-fill-color: #1a1a1a !important;
+  }
+
+  .cost-cards-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .cost-card {
+    border: 1px solid #d0d0d0 !important;
+    break-inside: avoid !important;
+    padding: 16px !important;
+    box-shadow: none !important;
+  }
+
+  .cost-card-value,
+  .cost-card.lifetime .cost-card-value {
+    color: #1a1a1a !important;
+    -webkit-text-fill-color: #1a1a1a !important;
   }
 
   /* Footer on print */
