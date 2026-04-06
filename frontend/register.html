@@ -2,105 +2,133 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Register</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — ABC Fleet Maintenance</title>
+  <meta name="description" content="Create an account on ABC Rent A Car Vehicle Maintenance System" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center h-screen">
+<body>
+<div class="page-wrapper center-page">
 
-  <div class="bg-white p-8 rounded shadow w-96">
-    <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+  <div class="card auth-card">
 
-    <!-- Name -->
-    <input
-      id="name"
-      type="text"
-      placeholder="Full Name"
-      class="w-full mb-3 p-2 border rounded"
-    />
+    <!-- Header -->
+    <div class="card-header" style="flex-direction: column; text-align: center; gap: 16px;">
+      <div class="auth-logo">🚗</div>
+      <div>
+        <div class="auth-title">Create Account</div>
+        <div class="auth-subtitle">Join ABC Fleet Maintenance System</div>
+      </div>
+    </div>
+
+    <!-- Full Name -->
+    <div class="form-group">
+      <label class="form-label" for="name">Full Name</label>
+      <input id="name" type="text" placeholder="e.g. Ahmed Al-Balushi" class="form-input" />
+    </div>
 
     <!-- Email -->
-    <input
-      id="email"
-      type="email"
-      placeholder="Email"
-      class="w-full mb-3 p-2 border rounded"
-    />
+    <div class="form-group">
+      <label class="form-label" for="email">Email Address</label>
+      <input id="email" type="email" placeholder="you@example.com" class="form-input" />
+    </div>
 
     <!-- Password -->
-    <input
-      id="password"
-      type="password"
-      placeholder="Password"
-      class="w-full mb-3 p-2 border rounded"
-    />
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input id="password" type="password" placeholder="Min. 6 characters" class="form-input" />
+    </div>
 
-    <!-- Role Selection -->
-    <select
-      id="role"
-      class="w-full mb-4 p-2 border rounded"
-    >
-      <option value="">Select Role</option>
-      <option value="owner">Vehicle Owner</option>
-      <option value="mechanic">Mechanic</option>
-    </select>
+    <!-- Role -->
+    <div class="form-group">
+      <label class="form-label" for="role">Account Type</label>
+      <select id="role" class="form-select">
+        <option value="">Select your role</option>
+        <option value="owner">🏢 Vehicle Owner</option>
+        <option value="mechanic">🔧 Mechanic</option>
+      </select>
+    </div>
 
     <!-- Register Button -->
-    <button
-      onclick="registerUser()"
-      class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-    >
-      Register
+    <button id="register-btn" onclick="registerUser()" class="btn btn-success btn-full">
+      Create Account
     </button>
 
-    <p class="text-sm text-center mt-4">
+    <!-- Login link -->
+    <p class="text-center text-sm mt-24" style="color: var(--text-muted);">
       Already have an account?
-      <a href="login.html" class="text-blue-600">Login</a>
+      <a href="login.html" class="link">Sign in</a>
     </p>
   </div>
 
-  <script>
-    async function registerUser() {
-      const name = document.getElementById("name").value;
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const role = document.getElementById("role").value;
+</div>
 
-      if (!name || !email || !password || !role) {
-        alert("All fields are required");
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type + ' show';
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  async function registerUser() {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const role = document.getElementById("role").value;
+    const btn = document.getElementById("register-btn");
+
+    if (!name || !email || !password || !role) {
+      showToast("All fields are required", "error");
+      return;
+    }
+
+    if (password.length < 6) {
+      showToast("Password must be at least 6 characters", "error");
+      return;
+    }
+
+    btn.textContent = "Creating account...";
+    btn.disabled = true;
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(data.message || "Registration failed", "error");
+        btn.textContent = "Create Account";
+        btn.disabled = false;
         return;
       }
 
-      try {
-        const response = await fetch("/api/auth/register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            password,
-            role
-          })
-        });
+      showToast("Account created! Redirecting to login...");
 
-        const data = await response.json();
-
-        if (!response.ok) {
-          alert(data.message || "Registration failed");
-          return;
-        }
-
-        alert("Registration successful!");
+      setTimeout(() => {
         window.location.href = "login.html";
+      }, 1200);
 
-      } catch (error) {
-        alert("Server error. Check backend.");
-        console.error(error);
-      }
+    } catch (error) {
+      showToast("Server error. Check backend.", "error");
+      btn.textContent = "Create Account";
+      btn.disabled = false;
+      console.error(error);
     }
-  </script>
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') registerUser();
+  });
+</script>
 
 </body>
 </html>

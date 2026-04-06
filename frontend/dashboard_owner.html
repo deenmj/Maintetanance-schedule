@@ -1,162 +1,263 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Owner Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owner Dashboard — ABC Fleet Maintenance</title>
+  <meta name="description" content="Vehicle owner dashboard for monitoring maintenance status and service history" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
-<body class="bg-gray-100 min-h-screen">
+<body>
+<div class="page-wrapper">
 
-<!-- NAVBAR -->
-<nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-  <h1 class="text-xl font-bold">Vehicle Owner Dashboard</h1>
-  <button onclick="logout()" class="bg-red-500 px-4 py-1 rounded">
-    Logout
-  </button>
-</nav>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="navbar-logo">A</div>
+      <div>
+        <div class="navbar-title">ABC Fleet Maintenance</div>
+        <div class="navbar-subtitle">Owner Dashboard</div>
+      </div>
+    </div>
+    <div class="navbar-actions">
+      <div class="navbar-user">
+        <div class="navbar-avatar" id="avatar">—</div>
+        <span class="navbar-user-name" id="userName">—</span>
+      </div>
+      <button onclick="logout()" class="btn btn-danger">Logout</button>
+    </div>
+  </nav>
 
-<div class="p-6 max-w-5xl mx-auto space-y-6">
+  <!-- MAIN CONTENT -->
+  <div class="container" style="padding-top: 32px; padding-bottom: 80px;">
 
-  <!-- VEHICLE INPUT -->
-  <div class="bg-white p-6 rounded shadow">
-    <h2 class="text-lg font-semibold mb-4">Check Vehicle Maintenance Status</h2>
+    <!-- Page Title -->
+    <div class="animate-in" style="margin-bottom: 32px;">
+      <h1 style="font-size: 28px; font-weight: 800; color: var(--text-primary);">Vehicle Status</h1>
+      <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Monitor your fleet's maintenance health in real time</p>
+    </div>
 
-    <input
-      id="vehicleNumber"
-      placeholder="Vehicle Number (e.g. BGT 2987)"
-      class="w-full mb-3 p-2 border rounded"
-    >
+    <!-- VEHICLE LOOKUP -->
+    <div class="card animate-in animate-in-delay-1" style="margin-bottom: 28px;">
+      <div class="card-header">
+        <div class="card-icon blue">🔍</div>
+        <div>
+          <div class="card-title">Vehicle Lookup</div>
+          <div class="card-description">Enter a vehicle number and current mileage to check status</div>
+        </div>
+      </div>
 
-    <input
-      id="currentMileage"
-      type="number"
-      placeholder="Current Mileage (KM)"
-      class="w-full mb-4 p-2 border rounded"
-    >
+      <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="vehicleNumber">Vehicle Number</label>
+          <input id="vehicleNumber" placeholder="e.g. BGT 2987" class="form-input" />
+        </div>
 
-    <button
-      onclick="loadVehicleStatus()"
-      class="bg-blue-600 text-white px-6 py-2 rounded font-semibold"
-    >
-      View Status
-    </button>
-  </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="currentMileage">Current Mileage (KM)</label>
+          <input id="currentMileage" type="number" placeholder="e.g. 52000" class="form-input" />
+        </div>
 
-  <!-- ALERTS -->
-  <div>
-    <h2 class="text-lg font-semibold mb-3">🚨 Maintenance Alerts</h2>
-    <div id="alerts" class="space-y-3"></div>
-  </div>
+        <button id="lookupBtn" onclick="loadVehicleStatus()" class="btn btn-primary" style="height: 44px;">
+          Check Status
+        </button>
+      </div>
+    </div>
 
-  <!-- SERVICE HISTORY -->
-  <div>
-    <h2 class="text-lg font-semibold mb-3">📜 Service History</h2>
-    <div id="history" class="space-y-4"></div>
+    <!-- STATS (populated dynamically) -->
+    <div id="statsGrid" class="stats-grid" style="display: none;"></div>
+
+    <!-- ALERTS -->
+    <div id="alertsSection" style="display: none;" class="animate-in">
+      <div class="section-header">
+        <span class="icon">🚨</span>
+        <h2>Maintenance Alerts</h2>
+      </div>
+      <div id="alerts" class="space-y"></div>
+    </div>
+
+    <!-- SERVICE HISTORY -->
+    <div id="historySection" style="display: none; margin-top: 32px;" class="animate-in">
+      <div class="section-header">
+        <span class="icon">📋</span>
+        <h2>Service History</h2>
+      </div>
+      <div id="history" class="space-y"></div>
+    </div>
+
   </div>
 
 </div>
 
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
 <script>
-/* ---------------- AUTH CHECK ---------------- */
-const token = localStorage.getItem("token");
-if (!token) {
-  alert("Please login first");
-  window.location.href = "login.html";
-}
+  /* ── AUTH CHECK ── */
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-/* ---------------- LOAD VEHICLE STATUS ---------------- */
-async function loadVehicleStatus() {
-  const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
-  const currentMileage = Number(document.getElementById("currentMileage").value);
-
-  const alertsDiv = document.getElementById("alerts");
-  const historyDiv = document.getElementById("history");
-
-  alertsDiv.innerHTML = "";
-  historyDiv.innerHTML = "";
-
-  if (!vehicleNumber || !currentMileage) {
-    alert("Please enter vehicle number and current mileage");
-    return;
+  if (!token) {
+    window.location.href = "login.html";
   }
 
-  try {
-    const res = await fetch(
-      `/api/services/${vehicleNumber}`,
-      {
-        headers: { Authorization: "Bearer " + token }
-      }
-    );
+  /* Populate user info */
+  if (user.name) {
+    document.getElementById("userName").textContent = user.name;
+    document.getElementById("avatar").textContent = user.name.charAt(0).toUpperCase();
+  }
 
-    const services = await res.json();
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type + ' show';
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
 
-    if (!services.length) {
-      historyDiv.innerHTML =
-        "<p class='text-gray-600'>No service records found.</p>";
+  /* ── LOAD VEHICLE STATUS ── */
+  async function loadVehicleStatus() {
+    const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
+    const currentMileage = Number(document.getElementById("currentMileage").value);
+    const btn = document.getElementById("lookupBtn");
+
+    const alertsDiv = document.getElementById("alerts");
+    const historyDiv = document.getElementById("history");
+    const statsGrid = document.getElementById("statsGrid");
+
+    alertsDiv.innerHTML = "";
+    historyDiv.innerHTML = "";
+
+    if (!vehicleNumber || !currentMileage) {
+      showToast("Enter vehicle number and current mileage", "error");
       return;
     }
 
-    /* -------- MAINTENANCE ALERTS -------- */
-    services[0].items.forEach(item => {
-      const remainingKm = item.nextCheckKm - currentMileage;
+    btn.textContent = "Loading...";
+    btn.disabled = true;
 
-      let boxClass = "bg-green-100 text-green-700";
-      let message = `Next check in ${remainingKm} km`;
+    try {
+      const res = await fetch(
+        `/api/services/${vehicleNumber}`,
+        { headers: { Authorization: "Bearer " + token } }
+      );
 
-      if (remainingKm < 0) {
-        boxClass = "bg-red-100 text-red-700";
-        message = `Overdue by ${Math.abs(remainingKm)} km`;
-      } 
-      else if (remainingKm <= 1000) {
-        boxClass = "bg-yellow-100 text-yellow-800";
-        message = `Due in ${remainingKm} km`;
+      const services = await res.json();
+
+      if (!services.length) {
+        document.getElementById("alertsSection").style.display = "none";
+        document.getElementById("historySection").style.display = "block";
+        statsGrid.style.display = "none";
+        historyDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No service records found for <strong>${vehicleNumber}</strong></p>
+          </div>
+        `;
+        btn.textContent = "Check Status";
+        btn.disabled = false;
+        return;
       }
 
-      alertsDiv.innerHTML += `
-        <div class="p-4 rounded ${boxClass}">
-          <b>${item.component}</b>
-          <div class="text-sm mt-1">${message}</div>
-          <div class="text-xs text-gray-600">
-            Scheduled at ${item.nextCheckKm} km
-          </div>
+      /* ── STATS ── */
+      const latestService = services[0];
+      let overdueCount = 0;
+      let soonCount = 0;
+      let okCount = 0;
+
+      latestService.items.forEach(item => {
+        const remaining = item.nextCheckKm - currentMileage;
+        if (remaining < 0) overdueCount++;
+        else if (remaining <= 1000) soonCount++;
+        else okCount++;
+      });
+
+      statsGrid.style.display = "grid";
+      statsGrid.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${services.length}</div>
+          <div class="stat-label">Total Services</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-success); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${okCount}</div>
+          <div class="stat-label">On Track</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-warm); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${soonCount}</div>
+          <div class="stat-label">Due Soon</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-danger); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${overdueCount}</div>
+          <div class="stat-label">Overdue</div>
         </div>
       `;
-    });
 
-    /* -------- SERVICE HISTORY -------- */
-    services.forEach(service => {
-      let itemsHtml = "";
+      /* ── ALERTS ── */
+      document.getElementById("alertsSection").style.display = "block";
 
-      service.items.forEach(i => {
-        itemsHtml += `
-          <li>
-            <b>${i.component}</b> — ${i.action}
-            (Next: ${i.nextCheckKm} km)
-          </li>
+      latestService.items.forEach(item => {
+        const remainingKm = item.nextCheckKm - currentMileage;
+        let alertClass, alertIcon, message;
+
+        if (remainingKm < 0) {
+          alertClass = "danger";
+          alertIcon = "🔴";
+          message = `Overdue by ${Math.abs(remainingKm).toLocaleString()} km`;
+        } else if (remainingKm <= 1000) {
+          alertClass = "warning";
+          alertIcon = "🟡";
+          message = `Due in ${remainingKm.toLocaleString()} km`;
+        } else {
+          alertClass = "success";
+          alertIcon = "🟢";
+          message = `On track — next in ${remainingKm.toLocaleString()} km`;
+        }
+
+        alertsDiv.innerHTML += `
+          <div class="alert-box ${alertClass}">
+            <span class="alert-icon">${alertIcon}</span>
+            <div class="alert-content">
+              <div class="alert-title">${item.component}</div>
+              <div class="alert-meta">${message} · Scheduled at ${item.nextCheckKm.toLocaleString()} km</div>
+            </div>
+          </div>
         `;
       });
 
-      historyDiv.innerHTML += `
-        <div class="bg-white p-4 rounded shadow">
-          <p><b>Date:</b> ${new Date(service.serviceDate).toDateString()}</p>
-          <p><b>Mileage at Service:</b> ${service.mileageAtService} km</p>
-          <ul class="list-disc pl-5 mt-2">${itemsHtml}</ul>
-        </div>
-      `;
-    });
+      /* ── SERVICE HISTORY ── */
+      document.getElementById("historySection").style.display = "block";
 
-  } catch (err) {
-    console.error(err);
-    alert("Failed to load vehicle data");
+      services.forEach(service => {
+        let itemsHtml = "";
+        service.items.forEach(i => {
+          itemsHtml += `<li><strong>${i.component}</strong> — ${i.action} (Next: ${i.nextCheckKm.toLocaleString()} km)</li>`;
+        });
+
+        historyDiv.innerHTML += `
+          <div class="history-card">
+            <div class="history-header">
+              <span class="history-date">📅 ${new Date(service.serviceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              <span class="history-mileage">${service.mileageAtService.toLocaleString()} km</span>
+            </div>
+            <ul class="history-items">${itemsHtml}</ul>
+          </div>
+        `;
+      });
+
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to load vehicle data", "error");
+    }
+
+    btn.textContent = "Check Status";
+    btn.disabled = false;
   }
-}
 
-/* ---------------- LOGOUT ---------------- */
-function logout() {
-  localStorage.clear();
-  window.location.href = "login.html";
-}
+  /* ── LOGOUT ── */
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
 </script>
 
 </body>

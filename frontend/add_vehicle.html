@@ -2,67 +2,148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Add Vehicle (Mechanic)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register Vehicle — ABC Fleet Maintenance</title>
+  <meta name="description" content="Register a new vehicle to the ABC Fleet Maintenance System" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center h-screen">
+<body>
+<div class="page-wrapper">
 
-  <div class="bg-white p-6 rounded shadow w-96">
-    <h2 class="text-xl font-bold mb-4">Add Vehicle</h2>
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="navbar-logo">A</div>
+      <div>
+        <div class="navbar-title">ABC Fleet Maintenance</div>
+        <div class="navbar-subtitle">Vehicle Registration</div>
+      </div>
+    </div>
+    <div class="navbar-actions">
+      <a href="mechanic-dashboard.html" class="btn btn-ghost">← Back to Dashboard</a>
+    </div>
+  </nav>
 
-    <input id="vehicleNumber" placeholder="Vehicle Number"
-      class="w-full mb-3 p-2 border rounded">
+  <!-- MAIN -->
+  <div class="container" style="padding-top: 48px; max-width: 560px;">
 
-    <input id="model" placeholder="Vehicle Model"
-      class="w-full mb-3 p-2 border rounded">
+    <div class="card animate-in">
+      <div class="card-header">
+        <div class="card-icon violet">🚗</div>
+        <div>
+          <div class="card-title">Register New Vehicle</div>
+          <div class="card-description">Add a vehicle to the fleet maintenance system</div>
+        </div>
+      </div>
 
-    <input id="year" type="number" placeholder="Year"
-      class="w-full mb-3 p-2 border rounded">
+      <!-- Vehicle Number -->
+      <div class="form-group">
+        <label class="form-label" for="vehicleNumber">Vehicle Number</label>
+        <input id="vehicleNumber" placeholder="e.g. BGT 2987" class="form-input" />
+      </div>
 
-    <input id="mileage" type="number" placeholder="Mileage"
-      class="w-full mb-4 p-2 border rounded">
+      <!-- Model -->
+      <div class="form-group">
+        <label class="form-label" for="model">Vehicle Model</label>
+        <input id="model" placeholder="e.g. Toyota Camry" class="form-input" />
+      </div>
 
-    <button onclick="addVehicle()"
-      class="w-full bg-blue-600 text-white py-2 rounded">
-      Save Vehicle
-    </button>
+      <!-- Year & Mileage -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label" for="year">Year</label>
+          <input id="year" type="number" placeholder="e.g. 2022" class="form-input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="mileage">Current Mileage (KM)</label>
+          <input id="mileage" type="number" placeholder="e.g. 35000" class="form-input" />
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <button id="addBtn" onclick="addVehicle()" class="btn btn-primary btn-full" style="margin-top: 8px;">
+        Register Vehicle
+      </button>
+    </div>
+
   </div>
+</div>
 
-  <script>
-  async function addVehicle() {
-    const token = localStorage.getItem("token");
+<!-- Toast -->
+<div id="toast" class="toast"></div>
 
-    if (!token) {
-      alert("Please login first");
-      window.location.href = "login.html";
-      return;
-    }
+<script>
+  const token = localStorage.getItem("token");
 
-    const response = await fetch("/api/vehicles", {
-      method: "POST",
-      headers: {
-  "Content-Type": "application/json",
-  "Authorization": "Bearer " + localStorage.getItem("token")
-},
-
-      body: JSON.stringify({
-        vehicleNumber: document.getElementById("vehicleNumber").value,
-        model: document.getElementById("model").value,
-        year: document.getElementById("year").value,
-        mileage: document.getElementById("mileage").value
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message || "Failed to add vehicle");
-      return;
-    }
-
-    alert("Vehicle added successfully");
+  if (!token) {
+    window.location.href = "login.html";
   }
+
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type + ' show';
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  async function addVehicle() {
+    const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
+    const model = document.getElementById("model").value.trim();
+    const year = document.getElementById("year").value;
+    const mileage = document.getElementById("mileage").value;
+    const btn = document.getElementById("addBtn");
+
+    if (!vehicleNumber || !model || !year || !mileage) {
+      showToast("All fields are required", "error");
+      return;
+    }
+
+    btn.textContent = "Registering...";
+    btn.disabled = true;
+
+    try {
+      const response = await fetch("/api/vehicles", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ vehicleNumber, model, year: Number(year), mileage: Number(mileage) })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(data.message || "Failed to add vehicle", "error");
+        btn.textContent = "Register Vehicle";
+        btn.disabled = false;
+        return;
+      }
+
+      showToast("Vehicle registered successfully!");
+
+      // Reset form
+      setTimeout(() => {
+        document.getElementById("vehicleNumber").value = "";
+        document.getElementById("model").value = "";
+        document.getElementById("year").value = "";
+        document.getElementById("mileage").value = "";
+        btn.textContent = "Register Vehicle";
+        btn.disabled = false;
+      }, 1000);
+
+    } catch (err) {
+      showToast("Server error", "error");
+      btn.textContent = "Register Vehicle";
+      btn.disabled = false;
+      console.error(err);
+    }
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') addVehicle();
+  });
 </script>
 
 </body>

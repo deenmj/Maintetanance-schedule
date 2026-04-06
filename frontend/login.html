@@ -2,78 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Login</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — ABC Fleet Maintenance</title>
+  <meta name="description" content="Login to ABC Rent A Car Vehicle Maintenance System" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center h-screen">
+<body>
+<div class="page-wrapper center-page">
 
-  <div class="bg-white p-8 rounded shadow w-96">
-    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+  <div class="card auth-card">
 
-    <input
-      id="email"
-      type="email"
-      placeholder="Email"
-      class="w-full mb-3 p-2 border rounded"
-    />
+    <!-- Header -->
+    <div class="card-header" style="flex-direction: column; text-align: center; gap: 16px;">
+      <div class="auth-logo">🔧</div>
+      <div>
+        <div class="auth-title">Welcome Back</div>
+        <div class="auth-subtitle">Sign in to ABC Fleet Maintenance</div>
+      </div>
+    </div>
 
-    <input
-      id="password"
-      type="password"
-      placeholder="Password"
-      class="w-full mb-4 p-2 border rounded"
-    />
+    <!-- Email -->
+    <div class="form-group">
+      <label class="form-label" for="email">Email Address</label>
+      <input id="email" type="email" placeholder="you@example.com" class="form-input" />
+    </div>
 
-    <button
-      onclick="loginUser()"
-      class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
-    >
-      Login
+    <!-- Password -->
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input id="password" type="password" placeholder="Enter your password" class="form-input" />
+    </div>
+
+    <!-- Login Button -->
+    <button id="login-btn" onclick="loginUser()" class="btn btn-primary btn-full">
+      Sign In
     </button>
+
+    <!-- Register link -->
+    <p class="text-center text-sm mt-24" style="color: var(--text-muted);">
+      Don't have an account?
+      <a href="register.html" class="link">Create one</a>
+    </p>
+
+    <!-- Demo credentials hint -->
+    <div style="margin-top: 20px; padding: 14px; background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: var(--radius-sm); text-align: center;">
+      <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Demo Accounts</div>
+      <div style="font-size: 13px; color: var(--text-secondary);">
+        <strong style="color: var(--accent-blue);">Owner:</strong> ahmed@abc.com / pass123<br/>
+        <strong style="color: var(--accent-emerald);">Mechanic:</strong> ravi@abc.com / pass123
+      </div>
+    </div>
   </div>
 
-  <script>
-    async function loginUser() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+</div>
 
-      if (!email || !password) {
-        alert("Enter email and password");
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type + ' show';
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  async function loginUser() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const btn = document.getElementById("login-btn");
+
+    if (!email || !password) {
+      showToast("Please enter email and password", "error");
+      return;
+    }
+
+    btn.textContent = "Signing in...";
+    btn.disabled = true;
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(data.message || "Login failed", "error");
+        btn.textContent = "Sign In";
+        btn.disabled = false;
         return;
       }
 
-      try {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        });
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-        const data = await response.json();
+      showToast("Welcome back, " + data.user.name + "!");
 
-        if (!response.ok) {
-          alert(data.message || "Login failed");
-          return;
-        }
-
-        // Save token & user
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-
-        // Role-based redirect
+      setTimeout(() => {
         if (data.user.role === "mechanic") {
           window.location.href = "mechanic-dashboard.html";
         } else {
           window.location.href = "dashboard_owner.html";
         }
+      }, 800);
 
-      } catch (err) {
-        alert("Server error");
-        console.error(err);
-      }
+    } catch (err) {
+      showToast("Server error. Please try again.", "error");
+      btn.textContent = "Sign In";
+      btn.disabled = false;
+      console.error(err);
     }
-  </script>
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') loginUser();
+  });
+</script>
 
 </body>
 </html>
