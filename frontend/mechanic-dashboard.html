@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mechanic Dashboard — ABC Fleet Maintenance</title>
-  <meta name="description" content="Mechanic dashboard for logging vehicle service records" />
+  <meta name="description" content="Mechanic dashboard for logging vehicle service records and viewing service history" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -34,216 +34,273 @@
 
     <!-- Page Title -->
     <div class="animate-in" style="margin-bottom: 32px;">
-      <h1 style="font-size: 28px; font-weight: 800; color: var(--text-primary);">Service Record</h1>
-      <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Log a new maintenance service for a vehicle</p>
+      <h1 style="font-size: 28px; font-weight: 800; color: var(--text-primary);">Mechanic Workshop</h1>
+      <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Log services and review your service history</p>
     </div>
 
-    <!-- VEHICLE INFO -->
-    <div class="card animate-in animate-in-delay-1" style="margin-bottom: 24px;">
-      <div class="card-header">
-        <div class="card-icon blue">🚗</div>
-        <div>
-          <div class="card-title">Vehicle Information</div>
-          <div class="card-description">Enter the vehicle registration number and current mileage</div>
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-        <div class="form-group" style="margin-bottom: 0;">
-          <label class="form-label" for="vehicleNumber">Registration Number</label>
-          <input id="vehicleNumber" placeholder="e.g. ABC-1234" class="form-input" />
-        </div>
-        <div class="form-group" style="margin-bottom: 0;">
-          <label class="form-label" for="mileageAtService">Mileage at Service (KM)</label>
-          <input id="mileageAtService" type="number" placeholder="e.g. 45200" class="form-input" />
-        </div>
-      </div>
+    <!-- TAB NAVIGATION -->
+    <div class="tab-nav animate-in animate-in-delay-1" style="margin-bottom: 28px;">
+      <button class="tab-btn active" onclick="switchTab('record')" id="tabRecord">
+        🔧 New Service Record
+      </button>
+      <button class="tab-btn" onclick="switchTab('history')" id="tabHistory">
+        📋 Service History
+      </button>
     </div>
 
-    <!-- SERVICE CHECKLIST -->
-    <div class="card animate-in animate-in-delay-2" style="margin-bottom: 28px;">
-      <div class="card-header">
-        <div class="card-icon green">✅</div>
-        <div>
-          <div class="card-title">Service Checklist</div>
-          <div class="card-description">Select components that were serviced and set the next check interval</div>
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TAB 1: NEW SERVICE RECORD              -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tabContentRecord">
+
+      <!-- VEHICLE INFO -->
+      <div class="card animate-in animate-in-delay-2" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <div class="card-icon blue">🚗</div>
+          <div>
+            <div class="card-title">Vehicle Information</div>
+            <div class="card-description">Enter the vehicle registration number and current mileage</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="vehicleNumber">Registration Number</label>
+            <input id="vehicleNumber" placeholder="e.g. ABC-1234" class="form-input" />
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="mileageAtService">Mileage at Service (KM)</label>
+            <input id="mileageAtService" type="number" placeholder="e.g. 45200" class="form-input" />
+          </div>
         </div>
       </div>
 
-      <div id="components" class="space-y">
-
-        <!-- Engine Oil -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Engine Oil &amp; Oil Filter" />
-            <span>🛢️ Engine Oil &amp; Oil Filter</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+      <!-- SERVICE CHECKLIST -->
+      <div class="card animate-in animate-in-delay-3" style="margin-bottom: 28px;">
+        <div class="card-header">
+          <div class="card-icon green">✅</div>
+          <div>
+            <div class="card-title">Service Checklist</div>
+            <div class="card-description">Select components that were serviced and set the next check interval</div>
           </div>
         </div>
 
-        <!-- Brake Pads -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Brake Pads &amp; Discs" />
-            <span>🛞 Brake Pads &amp; Discs</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
-          </div>
-        </div>
+        <div id="components" class="space-y">
 
-        <!-- Brake Fluid -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Brake Fluid" />
-            <span>💧 Brake Fluid</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Engine Oil -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Engine Oil &amp; Oil Filter" />
+              <span>🛢️ Engine Oil &amp; Oil Filter</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
-        <!-- Tyres -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Tyres &amp; Wheel Alignment" />
-            <span>🔄 Tyres &amp; Wheel Alignment</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Brake Pads -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Brake Pads &amp; Discs" />
+              <span>🛞 Brake Pads &amp; Discs</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
-        <!-- Coolant -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Radiator Coolant &amp; Hoses" />
-            <span>🌡️ Radiator Coolant &amp; Hoses</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Brake Fluid -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Brake Fluid" />
+              <span>💧 Brake Fluid</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
-        <!-- Air Filter -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Air Filter" />
-            <span>🌬️ Air Filter</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Tyres -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Tyres &amp; Wheel Alignment" />
+              <span>🔄 Tyres &amp; Wheel Alignment</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
-        <!-- Fuel Filter -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Fuel Filter" />
-            <span>⛽ Fuel Filter</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Coolant -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Radiator Coolant &amp; Hoses" />
+              <span>🌡️ Radiator Coolant &amp; Hoses</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
-        <!-- Spark / Glow -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Spark Plugs / Glow Plugs" />
-            <span>⚡ Spark Plugs / Glow Plugs</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Air Filter -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Air Filter" />
+              <span>🌬️ Air Filter</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
-        <!-- Battery -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Battery &amp; Charging System" />
-            <span>🔋 Battery &amp; Charging System</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Fuel Filter -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Fuel Filter" />
+              <span>⛽ Fuel Filter</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
-        <!-- Gearbox -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Gearbox / Transmission Oil" />
-            <span>⚙️ Gearbox / Transmission Oil</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Spark / Glow -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Spark Plugs / Glow Plugs" />
+              <span>⚡ Spark Plugs / Glow Plugs</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
-        <!-- Clutch -->
-        <div class="checklist-item">
-          <label class="checklist-label">
-            <input type="checkbox" data-component="Clutch System" />
-            <span>🔩 Clutch System</span>
-          </label>
-          <div class="component-details hidden">
-            <select class="action form-select" style="max-width: 160px;">
-              <option value="Checked">Checked</option>
-              <option value="Replaced">Replaced</option>
-            </select>
-            <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+          <!-- Battery -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Battery &amp; Charging System" />
+              <span>🔋 Battery &amp; Charging System</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
           </div>
-        </div>
 
+          <!-- Gearbox -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Gearbox / Transmission Oil" />
+              <span>⚙️ Gearbox / Transmission Oil</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
+          </div>
+
+          <!-- Clutch -->
+          <div class="checklist-item">
+            <label class="checklist-label">
+              <input type="checkbox" data-component="Clutch System" />
+              <span>🔩 Clutch System</span>
+            </label>
+            <div class="component-details hidden">
+              <select class="action form-select" style="max-width: 160px;">
+                <option value="Checked">Checked</option>
+                <option value="Replaced">Replaced</option>
+              </select>
+              <input type="number" class="nextKm form-input" style="max-width: 200px;" placeholder="Next check KM" />
+            </div>
+          </div>
+
+        </div>
       </div>
+
+      <!-- SAVE BUTTON -->
+      <button id="saveBtn" onclick="saveService()" class="btn btn-success btn-full" style="padding: 16px; font-size: 16px;">
+        💾 Save Service Record
+      </button>
+
     </div>
 
-    <!-- SAVE BUTTON -->
-    <button id="saveBtn" onclick="saveService()" class="btn btn-success btn-full" style="padding: 16px; font-size: 16px;">
-      💾 Save Service Record
-    </button>
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TAB 2: SERVICE HISTORY                 -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tabContentHistory" style="display: none;">
+
+      <!-- Search & Actions Bar -->
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <div class="card-icon violet">📋</div>
+          <div>
+            <div class="card-title">My Service Logs</div>
+            <div class="card-description">View all service records you have logged</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: end; flex-wrap: wrap;">
+          <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+            <label class="form-label" for="historySearch">Search by Vehicle Number</label>
+            <input id="historySearch" placeholder="e.g. BGT 2987" class="form-input" />
+          </div>
+          <button onclick="loadMechanicHistory()" class="btn btn-primary" style="height: 44px;" id="searchHistoryBtn">
+            🔍 Search
+          </button>
+          <button onclick="loadMechanicHistory(true)" class="btn btn-ghost" style="height: 44px;">
+            Show All
+          </button>
+          <button onclick="printHistory()" class="btn btn-print" style="height: 44px;" id="printHistoryBtn">
+            🖨️ Print Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div id="mechanicStatsGrid" class="stats-grid" style="display: none;"></div>
+
+      <!-- History List -->
+      <div id="mechanicHistoryList" class="space-y"></div>
+
+    </div>
 
   </div>
 
@@ -256,6 +313,16 @@
 
 <!-- Toast -->
 <div id="toast" class="toast"></div>
+
+<!-- Print-only header (hidden on screen) -->
+<div id="printHeader" class="print-header">
+  <div class="print-logo">ABC Fleet Maintenance</div>
+  <div class="print-report-title">Service History Report — Mechanic</div>
+  <div class="print-meta">
+    <span id="printMechanicName"></span>
+    <span id="printDate"></span>
+  </div>
+</div>
 
 <script>
   /* ── AUTH ── */
@@ -276,6 +343,27 @@
     toast.textContent = message;
     toast.className = 'toast ' + type + ' show';
     setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  /* ── TAB SWITCHING ── */
+  function switchTab(tab) {
+    const recordTab = document.getElementById('tabContentRecord');
+    const historyTab = document.getElementById('tabContentHistory');
+    const btnRecord = document.getElementById('tabRecord');
+    const btnHistory = document.getElementById('tabHistory');
+
+    if (tab === 'record') {
+      recordTab.style.display = 'block';
+      historyTab.style.display = 'none';
+      btnRecord.classList.add('active');
+      btnHistory.classList.remove('active');
+    } else {
+      recordTab.style.display = 'none';
+      historyTab.style.display = 'block';
+      btnRecord.classList.remove('active');
+      btnHistory.classList.add('active');
+      loadMechanicHistory(true);
+    }
   }
 
   /* ── Toggle component details ── */
@@ -379,6 +467,130 @@
       btn.textContent = "💾 Save Service Record";
       btn.disabled = false;
     }
+  }
+
+  /* ── LOAD MECHANIC SERVICE HISTORY ── */
+  let mechanicServicesCache = [];
+
+  async function loadMechanicHistory(showAll = false) {
+    const searchInput = document.getElementById("historySearch");
+    const vehicleFilter = showAll ? "" : searchInput.value.trim();
+    const listDiv = document.getElementById("mechanicHistoryList");
+    const statsGrid = document.getElementById("mechanicStatsGrid");
+
+    listDiv.innerHTML = `
+      <div class="empty-state" style="padding: 32px;">
+        <div class="icon" style="animation: pulse 1.2s infinite;">⏳</div>
+        <p>Loading service history...</p>
+      </div>
+    `;
+
+    if (showAll) searchInput.value = "";
+
+    try {
+      let url = "/api/services/mechanic/history";
+      if (vehicleFilter) {
+        url += "?vehicleNumber=" + encodeURIComponent(vehicleFilter);
+      }
+
+      const res = await fetch(url, {
+        headers: { Authorization: "Bearer " + token }
+      });
+
+      const services = await res.json();
+      mechanicServicesCache = services;
+
+      if (!services.length) {
+        statsGrid.style.display = "none";
+        listDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No service records found${vehicleFilter ? ' for <strong>' + vehicleFilter + '</strong>' : ''}</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Stats
+      const uniqueVehicles = [...new Set(services.map(s => s.vehicleNumber))];
+      const totalComponents = services.reduce((sum, s) => sum + s.items.length, 0);
+      const replacedCount = services.reduce((sum, s) => sum + s.items.filter(i => i.action === "Replaced").length, 0);
+      const checkedCount = totalComponents - replacedCount;
+
+      statsGrid.style.display = "grid";
+      statsGrid.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${services.length}</div>
+          <div class="stat-label">Total Services</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-success); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${uniqueVehicles.length}</div>
+          <div class="stat-label">Vehicles Serviced</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-warm); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${replacedCount}</div>
+          <div class="stat-label">Parts Replaced</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${checkedCount}</div>
+          <div class="stat-label">Parts Checked</div>
+        </div>
+      `;
+
+      // Render history cards
+      listDiv.innerHTML = "";
+      services.forEach((service, idx) => {
+        let itemsHtml = "";
+        service.items.forEach(i => {
+          const actionBadge = i.action === "Replaced"
+            ? `<span class="action-badge replaced">Replaced</span>`
+            : `<span class="action-badge checked">Checked</span>`;
+          itemsHtml += `
+            <li>
+              <strong>${i.component}</strong>
+              ${actionBadge}
+              <span class="next-km-tag">Next: ${i.nextCheckKm.toLocaleString()} km</span>
+            </li>
+          `;
+        });
+
+        listDiv.innerHTML += `
+          <div class="history-card" style="animation-delay: ${idx * 0.05}s;">
+            <div class="history-header">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="vehicle-badge">${service.vehicleNumber}</span>
+                <span class="history-date">📅 ${new Date(service.serviceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              </div>
+              <span class="history-mileage">${service.mileageAtService.toLocaleString()} km</span>
+            </div>
+            <ul class="history-items">${itemsHtml}</ul>
+          </div>
+        `;
+      });
+
+    } catch (err) {
+      console.error(err);
+      listDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">❌</div>
+          <p>Failed to load service history</p>
+        </div>
+      `;
+      showToast("Failed to load service history", "error");
+    }
+  }
+
+  /* ── PRINT ── */
+  function printHistory() {
+    if (!mechanicServicesCache.length) {
+      showToast("Load service history first before printing", "error");
+      return;
+    }
+
+    document.getElementById("printMechanicName").textContent = "Mechanic: " + (user.name || "—");
+    document.getElementById("printDate").textContent = "Printed: " + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    window.print();
   }
 
   /* ── LOGOUT ── */

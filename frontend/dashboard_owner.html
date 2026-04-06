@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr auto auto; gap: 16px; align-items: end;">
         <div class="form-group" style="margin-bottom: 0;">
           <label class="form-label" for="vehicleNumber">Vehicle Number</label>
           <input id="vehicleNumber" placeholder="e.g. BGT 2987" class="form-input" />
@@ -61,6 +61,10 @@
 
         <button id="lookupBtn" onclick="loadVehicleStatus()" class="btn btn-primary" style="height: 44px;">
           Check Status
+        </button>
+
+        <button id="printBtn" onclick="printReport()" class="btn btn-print" style="height: 44px; display: none;">
+          🖨️ Print
         </button>
       </div>
     </div>
@@ -93,6 +97,17 @@
 <!-- Toast -->
 <div id="toast" class="toast"></div>
 
+<!-- Print-only header (hidden on screen) -->
+<div id="printHeader" class="print-header">
+  <div class="print-logo">ABC Fleet Maintenance</div>
+  <div class="print-report-title">Vehicle Service Report</div>
+  <div class="print-meta">
+    <span id="printVehicle"></span>
+    <span id="printOwner"></span>
+    <span id="printDate"></span>
+  </div>
+</div>
+
 <script>
   /* ── AUTH CHECK ── */
   const token = localStorage.getItem("token");
@@ -116,6 +131,9 @@
   }
 
   /* ── LOAD VEHICLE STATUS ── */
+  let currentVehicleNumber = "";
+  let currentMileageVal = 0;
+
   async function loadVehicleStatus() {
     const vehicleNumber = document.getElementById("vehicleNumber").value.trim();
     const currentMileage = Number(document.getElementById("currentMileage").value);
@@ -133,6 +151,9 @@
       return;
     }
 
+    currentVehicleNumber = vehicleNumber;
+    currentMileageVal = currentMileage;
+
     btn.textContent = "Loading...";
     btn.disabled = true;
 
@@ -148,6 +169,7 @@
         document.getElementById("alertsSection").style.display = "none";
         document.getElementById("historySection").style.display = "block";
         statsGrid.style.display = "none";
+        document.getElementById("printBtn").style.display = "none";
         historyDiv.innerHTML = `
           <div class="empty-state">
             <div class="icon">📭</div>
@@ -158,6 +180,9 @@
         btn.disabled = false;
         return;
       }
+
+      // Show print button
+      document.getElementById("printBtn").style.display = "inline-flex";
 
       /* ── STATS ── */
       const latestService = services[0];
@@ -228,15 +253,31 @@
       document.getElementById("historySection").style.display = "block";
 
       services.forEach(service => {
+        const mechanicName = service.mechanicId && service.mechanicId.name
+          ? service.mechanicId.name
+          : "Unknown";
+
         let itemsHtml = "";
         service.items.forEach(i => {
-          itemsHtml += `<li><strong>${i.component}</strong> — ${i.action} (Next: ${i.nextCheckKm.toLocaleString()} km)</li>`;
+          const actionBadge = i.action === "Replaced"
+            ? `<span class="action-badge replaced">Replaced</span>`
+            : `<span class="action-badge checked">Checked</span>`;
+          itemsHtml += `
+            <li>
+              <strong>${i.component}</strong>
+              ${actionBadge}
+              <span class="next-km-tag">Next: ${i.nextCheckKm.toLocaleString()} km</span>
+            </li>
+          `;
         });
 
         historyDiv.innerHTML += `
           <div class="history-card">
             <div class="history-header">
-              <span class="history-date">📅 ${new Date(service.serviceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="history-date">📅 ${new Date(service.serviceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                <span class="mechanic-tag">🔧 ${mechanicName}</span>
+              </div>
               <span class="history-mileage">${service.mileageAtService.toLocaleString()} km</span>
             </div>
             <ul class="history-items">${itemsHtml}</ul>
@@ -251,6 +292,15 @@
 
     btn.textContent = "Check Status";
     btn.disabled = false;
+  }
+
+  /* ── PRINT ── */
+  function printReport() {
+    document.getElementById("printVehicle").textContent = "Vehicle: " + currentVehicleNumber;
+    document.getElementById("printOwner").textContent = "Owner: " + (user.name || "—");
+    document.getElementById("printDate").textContent = "Printed: " + new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    window.print();
   }
 
   /* ── LOGOUT ── */

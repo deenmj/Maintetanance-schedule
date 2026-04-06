@@ -33,6 +33,32 @@ router.post("/", auth, mechanicOnly, async (req, res) => {
 });
 
 /* ===============================
+   MECHANIC SERVICE HISTORY
+   (returns services logged by
+    the authenticated mechanic)
+================================ */
+router.get("/mechanic/history", auth, mechanicOnly, async (req, res) => {
+  try {
+    const query = { mechanicId: req.user.userId };
+
+    // Optional vehicle number filter
+    if (req.query.vehicleNumber) {
+      query.vehicleNumber = { $regex: req.query.vehicleNumber, $options: "i" };
+    }
+
+    const services = await Service.find(query)
+      .sort({ serviceDate: -1 })
+      .populate("mechanicId", "name");
+
+    res.json(services);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to load mechanic history" });
+  }
+});
+
+/* ===============================
    GET SERVICE HISTORY (OWNER)
 ================================ */
 router.get("/:vehicleNumber", auth, async (req, res) => {
@@ -40,7 +66,8 @@ router.get("/:vehicleNumber", auth, async (req, res) => {
     const vehicleNumber = req.params.vehicleNumber;
 
     const services = await Service.find({ vehicleNumber })
-      .sort({ serviceDate: -1 });
+      .sort({ serviceDate: -1 })
+      .populate("mechanicId", "name");
 
     res.json(services);
 
