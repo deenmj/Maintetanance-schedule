@@ -61,6 +61,27 @@
         </div>
       </div>
 
+      <!-- Owner Details -->
+      <div style="margin-top: 24px; margin-bottom: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+        <h3 style="font-size: 16px; color: var(--text-primary); margin-bottom: 12px; font-weight: 600;">Owner Details</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">Create a new owner account or assign to an existing one by their email.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ownerName">Owner Name</label>
+        <input id="ownerName" placeholder="e.g. John Doe" class="form-input" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ownerEmail">Owner Email</label>
+        <input id="ownerEmail" type="email" placeholder="e.g. john@example.com" class="form-input" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ownerPassword">Initial Password</label>
+        <input id="ownerPassword" type="text" placeholder="Set a temporary password" class="form-input" />
+      </div>
+
       <!-- Submit -->
       <button id="addBtn" onclick="addVehicle()" class="btn btn-primary btn-full" style="margin-top: 8px;">
         Register Vehicle
@@ -92,9 +113,12 @@
     const model = document.getElementById("model").value.trim();
     const year = document.getElementById("year").value;
     const mileage = document.getElementById("mileage").value;
+    const ownerName = document.getElementById("ownerName").value.trim();
+    const ownerEmail = document.getElementById("ownerEmail").value.trim();
+    const ownerPassword = document.getElementById("ownerPassword").value.trim();
     const btn = document.getElementById("addBtn");
 
-    if (!vehicleNumber || !model || !year || !mileage) {
+    if (!vehicleNumber || !model || !year || !mileage || !ownerName || !ownerEmail || !ownerPassword) {
       showToast("All fields are required", "error");
       return;
     }
@@ -109,7 +133,10 @@
           "Content-Type": "application/json",
           "Authorization": "Bearer " + token
         },
-        body: JSON.stringify({ vehicleNumber, model, year: Number(year), mileage: Number(mileage) })
+        body: JSON.stringify({ 
+          vehicleNumber, model, year: Number(year), mileage: Number(mileage),
+          ownerName, ownerEmail, ownerPassword 
+        })
       });
 
       const data = await response.json();
@@ -129,6 +156,9 @@
         document.getElementById("model").value = "";
         document.getElementById("year").value = "";
         document.getElementById("mileage").value = "";
+        document.getElementById("ownerName").value = "";
+        document.getElementById("ownerEmail").value = "";
+        document.getElementById("ownerPassword").value = "";
         btn.textContent = "Register Vehicle";
         btn.disabled = false;
       }, 1000);
