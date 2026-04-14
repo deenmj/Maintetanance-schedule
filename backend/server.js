@@ -7,6 +7,8 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const vehicleRoutes = require("./routes/vehicleRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
+const reminderRoutes = require("./routes/reminderRoutes");
+const appointmentRoutes = require("./routes/appointmentRoutes");
 
 const app = express();
 
@@ -27,6 +29,8 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/services", serviceRoutes);
+app.use("/api/reminders", reminderRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)

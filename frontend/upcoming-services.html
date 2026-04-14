@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upcoming Services — ABC Fleet Maintenance</title>
+  <meta name="description" content="View upcoming vehicle service reminders, send email notifications, and book service appointments" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* ═══════════════════════════════════════════
+       UPCOMING SERVICES — PAGE-SPECIFIC STYLES
+       ═══════════════════════════════════════════ */
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-badge.overdue {
+      background: rgba(251, 113, 133, 0.15);
+      color: #fb7185;
+      border: 1px solid rgba(251, 113, 133, 0.3);
+      animation: pulseGlow 2s infinite;
+    }
+    .status-badge.due-soon {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+    .status-badge.good {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+    .status-badge.no-records {
+      background: rgba(100, 116, 139, 0.15);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(251, 113, 133, 0); }
+      50% { box-shadow: 0 0 12px 2px rgba(251, 113, 133, 0.2); }
+    }
+
+    /* Vehicle reminder cards */
+    .reminder-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      box-shadow: var(--shadow-card);
+      transition: var(--transition);
+      overflow: hidden;
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+    .reminder-card:hover {
+      border-color: var(--border-glow);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-2px);
+    }
+    .reminder-card.overdue { border-left: 4px solid #fb7185; }
+    .reminder-card.due-soon { border-left: 4px solid #fbbf24; }
+    .reminder-card.good { border-left: 4px solid #34d399; }
+    .reminder-card.no-records { border-left: 4px solid #64748b; }
+
+    .reminder-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 24px 24px 0;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .reminder-vehicle-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .reminder-vehicle-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      background: rgba(56, 189, 248, 0.1);
+    }
+    .reminder-vehicle-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .reminder-vehicle-model {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .reminder-card-body {
+      padding: 20px 24px;
+    }
+
+    /* Service info grid */
+    .service-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .service-info-item {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+    }
+    .service-info-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .service-info-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .service-info-value.negative { color: #fb7185; }
+    .service-info-value.warning { color: #fbbf24; }
+    .service-info-value.positive { color: #34d399; }
+
+    /* Component mini-list */
+    .component-mini-list {
+      margin-top: 16px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 16px;
+    }
+    .component-mini-list h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .component-mini-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-size: 13px;
+    }
+    .component-mini-item:last-child { border-bottom: none; }
+    .component-mini-name { color: var(--text-secondary); }
+    .component-mini-status {
+      font-weight: 600;
+      font-size: 12px;
+      padding: 2px 10px;
+      border-radius: 12px;
+    }
+    .component-mini-status.overdue {
+      color: #fb7185;
+      background: rgba(251,113,133,0.1);
+    }
+    .component-mini-status.due-soon {
+      color: #fbbf24;
+      background: rgba(251,191,36,0.1);
+    }
+    .component-mini-status.good {
+      color: #34d399;
+      background: rgba(52,211,153,0.1);
+    }
+
+    /* Action buttons row */
+    .reminder-card-actions {
+      display: flex;
+      gap: 10px;
+      padding: 0 24px 24px;
+      flex-wrap: wrap;
+    }
+    .btn-reminder {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-email {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-blue);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .btn-email:hover {
+      background: rgba(56, 189, 248, 0.2);
+      transform: translateY(-1px);
+    }
+    .btn-book {
+      background: rgba(52, 211, 153, 0.12);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(52, 211, 153, 0.25);
+    }
+    .btn-book:hover {
+      background: rgba(52, 211, 153, 0.2);
+      transform: translateY(-1px);
+    }
+
+    /* ═══════════════════════════════════════════
+       BOOKING MODAL
+       ═══════════════════════════════════════════ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.active {
+      display: flex;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 32px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+      animation: fadeInUp 0.3s ease-out;
+    }
+    .modal-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .modal-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .modal-actions .btn { flex: 1; }
+
+    /* Slot pills */
+    .slot-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .slot-pill {
+      flex: 1;
+      min-width: 120px;
+      text-align: center;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: var(--bg-glass);
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .slot-pill:hover {
+      border-color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.06);
+    }
+    .slot-pill.selected {
+      border-color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+    .slot-pill.unavailable {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .slot-pill .slot-avail {
+      display: block;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════
+       MY BOOKINGS
+       ═══════════════════════════════════════════ */
+    .booking-card {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: var(--transition);
+      animation: fadeInUp 0.4s ease-out;
+    }
+    .booking-card:hover {
+      border-color: var(--border-glow);
+    }
+    .booking-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .booking-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .booking-status.Pending {
+      background: rgba(251, 191, 36, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(251, 191, 36, 0.3);
+    }
+    .booking-status.Confirmed {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+    .booking-status.Completed {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+    .booking-status.Rejected {
+      background: rgba(251, 113, 133, 0.15);
+      color: #fb7185;
+      border: 1px solid rgba(251, 113, 133, 0.3);
+    }
+    .booking-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .booking-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .booking-detail-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+    .booking-detail-value {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Quick nav pills */
+    .quick-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .quick-nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+    .quick-nav a:hover {
+      border-color: var(--border-glow);
+      color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.06);
+    }
+
+    /* Summary stats for this page */
+    .reminder-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .rstat {
+      background: var(--bg-glass);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: var(--transition);
+    }
+    .rstat:hover { border-color: var(--border-glow); transform: translateY(-2px); }
+    .rstat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .rstat-icon.red { background: rgba(251,113,133,0.12); }
+    .rstat-icon.yellow { background: rgba(251,191,36,0.12); }
+    .rstat-icon.green { background: rgba(52,211,153,0.12); }
+    .rstat-icon.blue { background: rgba(56,189,248,0.12); }
+    .rstat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .rstat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+
+<body>
+<div class="page-wrapper">
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="navbar-logo">A</div>
+      <div>
+        <div class="navbar-title">ABC Fleet Maintenance</div>
+        <div class="navbar-subtitle">Upcoming Services & Bookings</div>
+      </div>
+    </div>
+    <div class="navbar-actions">
+      <div class="navbar-user">
+        <div class="navbar-avatar" id="avatar">—</div>
+        <span class="navbar-user-name" id="userName">—</span>
+      </div>
+      <button onclick="logout()" class="btn btn-danger">Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="container" style="padding-top: 32px; padding-bottom: 80px;">
+
+    <!-- Quick Nav -->
+    <div class="quick-nav animate-in">
+      <a href="dashboard_owner.html">← Back to Dashboard</a>
+    </div>
+
+    <!-- Page Title -->
+    <div class="animate-in" style="margin-bottom: 28px;">
+      <h1 style="font-size: 28px; font-weight: 800; color: var(--text-primary);">Upcoming Services</h1>
+      <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Monitor service schedules, send reminders, and book service slots for your vehicles</p>
+    </div>
+
+    <!-- TAB NAVIGATION -->
+    <div class="tab-nav animate-in animate-in-delay-1" style="margin-bottom: 28px;">
+      <button class="tab-btn active" onclick="switchTab('reminders')" id="tabReminders">
+        🔔 Service Reminders
+      </button>
+      <button class="tab-btn" onclick="switchTab('bookings')" id="tabBookings">
+        📅 My Bookings
+      </button>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TAB 1: SERVICE REMINDERS               -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tabContentReminders">
+
+      <!-- Stats -->
+      <div id="reminderStats" class="reminder-stats animate-in animate-in-delay-2"></div>
+
+      <!-- Vehicle Reminder Cards -->
+      <div id="reminderList" class="space-y-lg">
+        <div class="empty-state" style="padding: 48px;">
+          <div class="icon" style="animation: pulse 1.2s infinite;">⏳</div>
+          <p>Loading your vehicles...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TAB 2: MY BOOKINGS                     -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tabContentBookings" style="display: none;">
+
+      <div id="bookingList" class="space-y">
+        <div class="empty-state" style="padding: 48px;">
+          <div class="icon" style="animation: pulse 1.2s infinite;">⏳</div>
+          <p>Loading your bookings...</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal">
+    <div class="modal-title">📅 Book Service Appointment</div>
+    <div class="modal-subtitle" id="bookingModalSubtitle">Select your preferred date and time slot</div>
+
+    <input type="hidden" id="bookVehicleNumber" />
+
+    <div class="form-group">
+      <label class="form-label" for="bookDate">Preferred Date</label>
+      <input id="bookDate" type="date" class="form-input" onchange="checkSlots()" />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Time Slot</label>
+      <div class="slot-options" id="slotOptions">
+        <div class="slot-pill" onclick="selectSlot(this)" data-slot="Morning (8AM-12PM)">
+          🌅 Morning
+          <span class="slot-avail">8AM – 12PM</span>
+        </div>
+        <div class="slot-pill" onclick="selectSlot(this)" data-slot="Afternoon (12PM-4PM)">
+          ☀️ Afternoon
+          <span class="slot-avail">12PM – 4PM</span>
+        </div>
+        <div class="slot-pill" onclick="selectSlot(this)" data-slot="Evening (4PM-7PM)">
+          🌆 Evening
+          <span class="slot-avail">4PM – 7PM</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="bookServiceType">Service Type</label>
+      <select id="bookServiceType" class="form-select">
+        <option value="">Select service type...</option>
+        <option value="General Service">General Service</option>
+        <option value="Oil Change">Oil Change</option>
+        <option value="Brake Service">Brake Service</option>
+        <option value="Tyre Service">Tyre Service</option>
+        <option value="Battery Replacement">Battery Replacement</option>
+        <option value="AC Service">AC Service</option>
+        <option value="Engine Tune-Up">Engine Tune-Up</option>
+        <option value="Full Inspection">Full Inspection</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="bookNotes">Additional Notes (Optional)</label>
+      <input id="bookNotes" type="text" placeholder="e.g. Strange noise from engine" class="form-input" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeBookingModal()">Cancel</button>
+      <button class="btn btn-success" id="bookSubmitBtn" onclick="submitBooking()">Confirm Booking</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<script>
+  /* ── AUTH CHECK ── */
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+  if (!token || user.role !== "owner") {
+    window.location.href = "login.html";
+  }
+
+  if (user.name) {
+    document.getElementById("userName").textContent = user.name;
+    document.getElementById("avatar").textContent = user.name.charAt(0).toUpperCase();
+  }
+
+  function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + type + ' show';
+    setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  /* ── TAB SWITCHING ── */
+  function switchTab(tab) {
+    const remindersTab = document.getElementById('tabContentReminders');
+    const bookingsTab = document.getElementById('tabContentBookings');
+    const btnReminders = document.getElementById('tabReminders');
+    const btnBookings = document.getElementById('tabBookings');
+
+    if (tab === 'reminders') {
+      remindersTab.style.display = 'block';
+      bookingsTab.style.display = 'none';
+      btnReminders.classList.add('active');
+      btnBookings.classList.remove('active');
+    } else {
+      remindersTab.style.display = 'none';
+      bookingsTab.style.display = 'block';
+      btnReminders.classList.remove('active');
+      btnBookings.classList.add('active');
+      loadBookings();
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     LOAD REMINDERS
+     ═══════════════════════════════════════════ */
+  async function loadReminders() {
+    try {
+      const res = await fetch("/api/reminders/my", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const reminders = await res.json();
+
+      const statsDiv = document.getElementById("reminderStats");
+      const listDiv = document.getElementById("reminderList");
+
+      if (!reminders.length) {
+        statsDiv.innerHTML = "";
+        listDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No vehicles registered yet</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Calculate stats
+      let overdueCount = 0, dueSoonCount = 0, goodCount = 0, noRecordCount = 0;
+      reminders.forEach(r => {
+        if (r.status === "overdue") overdueCount++;
+        else if (r.status === "due-soon") dueSoonCount++;
+        else if (r.status === "good") goodCount++;
+        else noRecordCount++;
+      });
+
+      statsDiv.innerHTML = `
+        <div class="rstat">
+          <div class="rstat-icon blue">🚗</div>
+          <div>
+            <div class="rstat-value">${reminders.length}</div>
+            <div class="rstat-label">Total Vehicles</div>
+          </div>
+        </div>
+        <div class="rstat">
+          <div class="rstat-icon red">🔴</div>
+          <div>
+            <div class="rstat-value" style="color: #fb7185;">${overdueCount}</div>
+            <div class="rstat-label">Overdue</div>
+          </div>
+        </div>
+        <div class="rstat">
+          <div class="rstat-icon yellow">🟡</div>
+          <div>
+            <div class="rstat-value" style="color: #fbbf24;">${dueSoonCount}</div>
+            <div class="rstat-label">Due Soon</div>
+          </div>
+        </div>
+        <div class="rstat">
+          <div class="rstat-icon green">🟢</div>
+          <div>
+            <div class="rstat-value" style="color: #34d399;">${goodCount}</div>
+            <div class="rstat-label">On Track</div>
+          </div>
+        </div>
+      `;
+
+      // Render vehicle cards (sorted: overdue first, then due-soon, then good, then no-records)
+      const order = { overdue: 0, "due-soon": 1, good: 2, "no-records": 3 };
+      reminders.sort((a, b) => order[a.status] - order[b.status]);
+
+      listDiv.innerHTML = "";
+      reminders.forEach((r, idx) => {
+        const statusLabel = {
+          overdue: "Overdue",
+          "due-soon": "Due Soon",
+          good: "On Track",
+          "no-records": "No Records"
+        }[r.status];
+
+        const statusIcon = {
+          overdue: "🔴",
+          "due-soon": "🟡",
+          good: "🟢",
+          "no-records": "⚪"
+        }[r.status];
+
+        let infoGridHtml = "";
+        if (r.status !== "no-records") {
+          const kmClass = r.kmRemaining < 0 ? "negative" : r.kmRemaining <= 1000 ? "warning" : "positive";
+          const dayClass = r.daysRemaining < 0 ? "negative" : r.daysRemaining <= 30 ? "warning" : "positive";
+
+          infoGridHtml = `
+            <div class="service-info-grid">
+              <div class="service-info-item">
+                <div class="service-info-label">Last Service</div>
+                <div class="service-info-value">${r.lastServiceDate ? new Date(r.lastServiceDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}</div>
+              </div>
+              <div class="service-info-item">
+                <div class="service-info-label">Next Service At</div>
+                <div class="service-info-value">${r.nextServiceKm ? r.nextServiceKm.toLocaleString() + " km" : "—"}</div>
+              </div>
+              <div class="service-info-item">
+                <div class="service-info-label">KM Remaining</div>
+                <div class="service-info-value ${kmClass}">${r.kmRemaining !== null ? (r.kmRemaining < 0 ? "Overdue by " + Math.abs(r.kmRemaining).toLocaleString() : r.kmRemaining.toLocaleString() + " km") : "—"}</div>
+              </div>
+              <div class="service-info-item">
+                <div class="service-info-label">Next Service Date</div>
+                <div class="service-info-value ${dayClass}">${r.nextServiceDate ? new Date(r.nextServiceDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}</div>
+              </div>
+              <div class="service-info-item">
+                <div class="service-info-label">Days Remaining</div>
+                <div class="service-info-value ${dayClass}">${r.daysRemaining !== null ? (r.daysRemaining < 0 ? Math.abs(r.daysRemaining) + " days overdue" : r.daysRemaining + " days") : "—"}</div>
+              </div>
+              <div class="service-info-item">
+                <div class="service-info-label">Current Mileage</div>
+                <div class="service-info-value">${r.currentMileage ? r.currentMileage.toLocaleString() + " km" : "—"}</div>
+              </div>
+            </div>
+          `;
+        } else {
+          infoGridHtml = `
+            <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 14px;">
+              No service records yet. Get your first service to start tracking.
+            </div>
+          `;
+        }
+
+        // Component breakdown
+        let componentsHtml = "";
+        if (r.components && r.components.length > 0) {
+          let compItems = r.components.map(c => {
+            const kmStr = c.kmRemaining < 0
+              ? "Overdue by " + Math.abs(c.kmRemaining).toLocaleString() + " km"
+              : c.kmRemaining.toLocaleString() + " km left";
+            return `
+              <div class="component-mini-item">
+                <span class="component-mini-name">${c.component}</span>
+                <span class="component-mini-status ${c.status}">${kmStr}</span>
+              </div>
+            `;
+          }).join("");
+
+          componentsHtml = `
+            <div class="component-mini-list">
+              <h4>🔩 Component Breakdown</h4>
+              ${compItems}
+            </div>
+          `;
+        }
+
+        listDiv.innerHTML += `
+          <div class="reminder-card ${r.status}" style="animation-delay: ${idx * 0.08}s">
+            <div class="reminder-card-header">
+              <div class="reminder-vehicle-info">
+                <div class="reminder-vehicle-icon">🚗</div>
+                <div>
+                  <div class="reminder-vehicle-name">${r.vehicleNumber}</div>
+                  <div class="reminder-vehicle-model">${r.model || "Unknown Model"}${r.year ? " · " + r.year : ""}</div>
+                </div>
+              </div>
+              <span class="status-badge ${r.status}">${statusIcon} ${statusLabel}</span>
+            </div>
+            <div class="reminder-card-body">
+              ${infoGridHtml}
+              ${componentsHtml}
+            </div>
+            <div class="reminder-card-actions">
+              ${r.status !== "no-records" ? `<button class="btn-reminder btn-email" onclick="sendReminder('${r.vehicleNumber}', this)">📧 Send Reminder Email</button>` : ""}
+              <button class="btn-reminder btn-book" onclick="openBookingModal('${r.vehicleNumber}', '${(r.model || "").replace(/'/g, "\\'")}')">📅 Book Service Slot</button>
+            </div>
+          </div>
+        `;
+      });
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById("reminderList").innerHTML = `
+        <div class="empty-state">
+          <div class="icon">❌</div>
+          <p>Failed to load reminders</p>
+        </div>
+      `;
+      showToast("Failed to load reminders", "error");
+    }
+  }
+
+  /* ── SEND REMINDER EMAIL ── */
+  async function sendReminder(vehicleNumber, btnEl) {
+    const originalText = btnEl.textContent;
+    btnEl.textContent = "Sending...";
+    btnEl.disabled = true;
+
+    try {
+      const res = await fetch("/api/reminders/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({ vehicleNumber })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.message || "Failed to send reminder", "error");
+      } else {
+        showToast(data.message || "Reminder sent!", "success");
+      }
+
+    } catch (err) {
+      console.error(err);
+      showToast("Server error", "error");
+    }
+
+    btnEl.textContent = originalText;
+    btnEl.disabled = false;
+  }
+
+  /* ═══════════════════════════════════════════
+     BOOKING MODAL
+     ═══════════════════════════════════════════ */
+  let selectedSlot = "";
+
+  function openBookingModal(vehicleNumber, model) {
+    document.getElementById("bookVehicleNumber").value = vehicleNumber;
+    document.getElementById("bookingModalSubtitle").textContent = `Booking for ${vehicleNumber}${model ? " — " + model : ""}`;
+    document.getElementById("bookDate").value = "";
+    document.getElementById("bookServiceType").value = "";
+    document.getElementById("bookNotes").value = "";
+    selectedSlot = "";
+
+    // Reset slots
+    document.querySelectorAll(".slot-pill").forEach(p => {
+      p.classList.remove("selected", "unavailable");
+      const avail = p.querySelector(".slot-avail");
+      if (avail) avail.textContent = p.dataset.slot.match(/\(([^)]+)\)/)[1];
+    });
+
+    // Set min date to today
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("bookDate").min = today;
+
+    document.getElementById("bookingModal").classList.add("active");
+  }
+
+  function closeBookingModal() {
+    document.getElementById("bookingModal").classList.remove("active");
+  }
+
+  function selectSlot(el) {
+    if (el.classList.contains("unavailable")) return;
+    document.querySelectorAll(".slot-pill").forEach(p => p.classList.remove("selected"));
+    el.classList.add("selected");
+    selectedSlot = el.dataset.slot;
+  }
+
+  async function checkSlots() {
+    const date = document.getElementById("bookDate").value;
+    if (!date) return;
+
+    try {
+      const res = await fetch(`/api/appointments/slots/available?date=${date}`, {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const slots = await res.json();
+
+      document.querySelectorAll(".slot-pill").forEach(pill => {
+        const slotData = slots.find(s => s.slot === pill.dataset.slot);
+        if (slotData) {
+          const avail = pill.querySelector(".slot-avail");
+          if (slotData.available) {
+            pill.classList.remove("unavailable");
+            avail.textContent = `${slotData.max - slotData.booked} slots left`;
+          } else {
+            pill.classList.add("unavailable");
+            pill.classList.remove("selected");
+            avail.textContent = "Fully Booked";
+            if (selectedSlot === pill.dataset.slot) selectedSlot = "";
+          }
+        }
+      });
+
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function submitBooking() {
+    const vehicleNumber = document.getElementById("bookVehicleNumber").value;
+    const preferredDate = document.getElementById("bookDate").value;
+    const serviceType = document.getElementById("bookServiceType").value;
+    const notes = document.getElementById("bookNotes").value;
+    const btn = document.getElementById("bookSubmitBtn");
+
+    if (!preferredDate) {
+      showToast("Please select a date", "error");
+      return;
+    }
+    if (!selectedSlot) {
+      showToast("Please select a time slot", "error");
+      return;
+    }
+    if (!serviceType) {
+      showToast("Please select a service type", "error");
+      return;
+    }
+
+    btn.textContent = "Booking...";
+    btn.disabled = true;
+
+    try {
+      const res = await fetch("/api/appointments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({
+          vehicleNumber,
+          preferredDate,
+          slot: selectedSlot,
+          serviceType,
+          notes
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.message || "Booking failed", "error");
+        btn.textContent = "Confirm Booking";
+        btn.disabled = false;
+        return;
+      }
+
+      showToast("🎉 Appointment booked successfully!", "success");
+      closeBookingModal();
+
+      btn.textContent = "Confirm Booking";
+      btn.disabled = false;
+
+    } catch (err) {
+      console.error(err);
+      showToast("Server error", "error");
+      btn.textContent = "Confirm Booking";
+      btn.disabled = false;
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     LOAD BOOKINGS
+     ═══════════════════════════════════════════ */
+  async function loadBookings() {
+    const listDiv = document.getElementById("bookingList");
+    listDiv.innerHTML = `
+      <div class="empty-state" style="padding: 32px;">
+        <div class="icon" style="animation: pulse 1.2s infinite;">⏳</div>
+        <p>Loading bookings...</p>
+      </div>
+    `;
+
+    try {
+      const res = await fetch("/api/appointments/my", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const bookings = await res.json();
+
+      if (!bookings.length) {
+        listDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No service appointments booked yet</p>
+          </div>
+        `;
+        return;
+      }
+
+      listDiv.innerHTML = "";
+      bookings.forEach((b, idx) => {
+        const dateStr = new Date(b.preferredDate).toLocaleDateString("en-GB", {
+          weekday: "short", day: "numeric", month: "short", year: "numeric"
+        });
+        const createdStr = new Date(b.createdAt).toLocaleDateString("en-GB", {
+          day: "numeric", month: "short", year: "numeric"
+        });
+
+        const statusIcon = {
+          Pending: "⏳",
+          Confirmed: "✅",
+          Completed: "🏁",
+          Rejected: "❌"
+        }[b.status] || "❓";
+
+        listDiv.innerHTML += `
+          <div class="booking-card" style="animation-delay: ${idx * 0.06}s">
+            <div class="booking-header">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="vehicle-badge">${b.vehicleNumber}</span>
+                <span style="font-size: 14px; color: var(--text-secondary); font-weight: 500;">${b.vehicleModel || ""}</span>
+              </div>
+              <span class="booking-status ${b.status}">${statusIcon} ${b.status}</span>
+            </div>
+            <div class="booking-details">
+              <div class="booking-detail-item">
+                <span class="booking-detail-label">📅 Date</span>
+                <span class="booking-detail-value">${dateStr}</span>
+              </div>
+              <div class="booking-detail-item">
+                <span class="booking-detail-label">🕐 Slot</span>
+                <span class="booking-detail-value">${b.slot}</span>
+              </div>
+              <div class="booking-detail-item">
+                <span class="booking-detail-label">🔧 Service</span>
+                <span class="booking-detail-value">${b.serviceType}</span>
+              </div>
+              <div class="booking-detail-item">
+                <span class="booking-detail-label">📝 Booked On</span>
+                <span class="booking-detail-value">${createdStr}</span>
+              </div>
+            </div>
+            ${b.notes ? `<div style="margin-top: 12px; padding: 10px 14px; background: var(--bg-glass); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-muted);"><strong>Notes:</strong> ${b.notes}</div>` : ""}
+            ${b.mechanicNote ? `<div style="margin-top: 8px; padding: 10px 14px; background: rgba(167,139,250,0.06); border: 1px solid rgba(167,139,250,0.15); border-radius: var(--radius-sm); font-size: 13px; color: var(--accent-violet);"><strong>Mechanic Note:</strong> ${b.mechanicNote}</div>` : ""}
+          </div>
+        `;
+      });
+
+    } catch (err) {
+      console.error(err);
+      listDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">❌</div>
+          <p>Failed to load bookings</p>
+        </div>
+      `;
+      showToast("Failed to load bookings", "error");
+    }
+  }
+
+  /* ── LOGOUT ── */
+  function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+  }
+
+  // Close modal on overlay click
+  document.getElementById("bookingModal").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) closeBookingModal();
+  });
+
+  /* ── INIT ── */
+  loadReminders();
+</script>
+
+</body>
+</html>

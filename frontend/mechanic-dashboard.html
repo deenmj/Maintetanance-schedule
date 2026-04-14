@@ -46,6 +46,9 @@
       <button class="tab-btn" onclick="switchTab('history')" id="tabHistory">
         📋 Service History
       </button>
+      <button class="tab-btn" onclick="switchTab('appointments')" id="tabAppointments">
+        📅 Appointments
+      </button>
     </div>
 
     <!-- ═══════════════════════════════════════ -->
@@ -366,6 +369,48 @@
 
     </div>
 
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TAB 3: APPOINTMENTS                    -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tabContentAppointments" style="display: none;">
+
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <div class="card-icon amber">📅</div>
+          <div>
+            <div class="card-title">Service Appointments</div>
+            <div class="card-description">View, confirm, or reject customer service bookings</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appointment Stats -->
+      <div id="appointmentStats" class="stats-grid" style="display: none;"></div>
+
+      <!-- Appointment List -->
+      <div id="appointmentList" class="space-y"></div>
+
+    </div>
+
+  </div>
+
+  <!-- APPOINTMENT DETAIL MODAL -->
+  <div id="detailModalOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); z-index:500; align-items:center; justify-content:center; padding:24px;">
+    <div id="detailModal" style="background:var(--bg-secondary); border:1px solid var(--border-color); border-radius:var(--radius-xl); width:100%; max-width:680px; max-height:90vh; overflow-y:auto; padding:0; box-shadow:0 24px 64px rgba(0,0,0,0.5); animation:fadeInUp 0.3s ease-out;">
+
+      <!-- Modal Header -->
+      <div style="padding:28px 28px 0; display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div style="font-size:20px; font-weight:800; color:var(--text-primary);">📋 Appointment Details</div>
+          <div id="detailSubtitle" style="font-size:13px; color:var(--text-muted); margin-top:4px;"></div>
+        </div>
+        <button onclick="closeDetailModal()" style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; color:var(--text-muted); transition:var(--transition);" onmouseover="this.style.borderColor='var(--accent-rose)'" onmouseout="this.style.borderColor='var(--border-color)'">✕</button>
+      </div>
+
+      <!-- Modal Content -->
+      <div id="detailContent" style="padding:24px 28px 28px;"></div>
+
+    </div>
   </div>
 
   <!-- FAB: Add Vehicle -->
@@ -413,20 +458,29 @@
   function switchTab(tab) {
     const recordTab = document.getElementById('tabContentRecord');
     const historyTab = document.getElementById('tabContentHistory');
+    const appointmentsTab = document.getElementById('tabContentAppointments');
     const btnRecord = document.getElementById('tabRecord');
     const btnHistory = document.getElementById('tabHistory');
+    const btnAppointments = document.getElementById('tabAppointments');
+
+    recordTab.style.display = 'none';
+    historyTab.style.display = 'none';
+    appointmentsTab.style.display = 'none';
+    btnRecord.classList.remove('active');
+    btnHistory.classList.remove('active');
+    btnAppointments.classList.remove('active');
 
     if (tab === 'record') {
       recordTab.style.display = 'block';
-      historyTab.style.display = 'none';
       btnRecord.classList.add('active');
-      btnHistory.classList.remove('active');
-    } else {
-      recordTab.style.display = 'none';
+    } else if (tab === 'history') {
       historyTab.style.display = 'block';
-      btnRecord.classList.remove('active');
       btnHistory.classList.add('active');
       loadMechanicHistory(true);
+    } else if (tab === 'appointments') {
+      appointmentsTab.style.display = 'block';
+      btnAppointments.classList.add('active');
+      loadAppointments();
     }
   }
 
@@ -818,6 +872,332 @@
     wrapper.style.display = '';
     printArea.style.display = 'none';
   }
+
+  /* ═══════════════════════════════════════════
+     APPOINTMENTS (MECHANIC)
+     ═══════════════════════════════════════════ */
+  async function loadAppointments() {
+    const listDiv = document.getElementById('appointmentList');
+    const statsDiv = document.getElementById('appointmentStats');
+
+    listDiv.innerHTML = `
+      <div class="empty-state" style="padding: 32px;">
+        <div class="icon" style="animation: pulse 1.2s infinite;">⏳</div>
+        <p>Loading appointments...</p>
+      </div>
+    `;
+
+    try {
+      const res = await fetch('/api/appointments/pending', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const appointments = await res.json();
+
+      if (!appointments.length) {
+        statsDiv.style.display = 'none';
+        listDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No pending appointments</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Stats
+      const pendingCount = appointments.filter(a => a.status === 'Pending').length;
+      const confirmedCount = appointments.filter(a => a.status === 'Confirmed').length;
+
+      statsDiv.style.display = 'grid';
+      statsDiv.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${appointments.length}</div>
+          <div class="stat-label">Total Active</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-warm); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${pendingCount}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-success); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${confirmedCount}</div>
+          <div class="stat-label">Confirmed</div>
+        </div>
+      `;
+
+      // Render appointment cards
+      listDiv.innerHTML = '';
+      appointments.forEach((appt, idx) => {
+        const dateStr = new Date(appt.preferredDate).toLocaleDateString('en-GB', {
+          weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+        });
+        const ownerName = appt.ownerId && appt.ownerId.name ? appt.ownerId.name : 'Unknown';
+        const ownerEmail = appt.ownerId && appt.ownerId.email ? appt.ownerId.email : '';
+
+        const statusColors = {
+          Pending: 'background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3);',
+          Confirmed: 'background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3);'
+        };
+        const statusStyle = statusColors[appt.status] || '';
+        const statusIcon = appt.status === 'Pending' ? '⏳' : '✅';
+
+        listDiv.innerHTML += `
+          <div class="history-card" style="animation-delay: ${idx * 0.05}s;">
+            <div class="history-header">
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span class="vehicle-badge">${appt.vehicleNumber}</span>
+                <span style="font-size: 13px; color: var(--text-muted);">${appt.vehicleModel || ''}</span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; ${statusStyle}">${statusIcon} ${appt.status}</span>
+              </div>
+              <span class="history-date">📅 ${dateStr}</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; font-size: 13px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">Owner</div>
+                <div style="color: var(--text-primary); font-weight: 500;">${ownerName}</div>
+                <div style="color: var(--text-muted); font-size: 12px;">${ownerEmail}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">Time Slot</div>
+                <div style="color: var(--text-primary); font-weight: 500;">${appt.slot}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">Service Type</div>
+                <div style="color: var(--text-primary); font-weight: 500;">${appt.serviceType}</div>
+              </div>
+            </div>
+
+            ${appt.notes ? '<div style="padding: 10px 14px; background: var(--bg-glass); border-radius: 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 16px;"><strong>Customer Note:</strong> ' + appt.notes + '</div>' : ''}
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button onclick="viewAppointmentDetails('${appt._id}', '${appt.vehicleNumber}', '${(appt.vehicleModel || '').replace(/'/g, '\\\'')}', '${ownerName.replace(/'/g, '\\\'')}', '${ownerEmail}', '${dateStr}', '${appt.slot}', '${appt.serviceType}', '${appt.status}', '${(appt.notes || '').replace(/'/g, '\\\'')}')" class="btn btn-ghost" style="padding: 8px 16px; font-size: 12px;">🔍 View Details</button>
+              ${appt.status === 'Pending' ? `
+                <button onclick="updateAppointmentStatus('${appt._id}', 'Confirmed', this)" class="btn btn-success" style="padding: 8px 16px; font-size: 12px;">✅ Confirm</button>
+                <button onclick="updateAppointmentStatus('${appt._id}', 'Rejected', this)" class="btn btn-danger" style="padding: 8px 16px; font-size: 12px;">❌ Reject</button>
+              ` : ''}
+              ${appt.status === 'Confirmed' ? `
+                <button onclick="updateAppointmentStatus('${appt._id}', 'Completed', this)" class="btn btn-primary" style="padding: 8px 16px; font-size: 12px;">🏁 Mark Completed</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+    } catch (err) {
+      console.error(err);
+      listDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">❌</div>
+          <p>Failed to load appointments</p>
+        </div>
+      `;
+      showToast('Failed to load appointments', 'error');
+    }
+  }
+
+  async function updateAppointmentStatus(appointmentId, status, btnEl) {
+    const originalText = btnEl.textContent;
+    btnEl.textContent = 'Updating...';
+    btnEl.disabled = true;
+
+    try {
+      const res = await fetch(`/api/appointments/${appointmentId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ status })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.message || 'Failed to update', 'error');
+        btnEl.textContent = originalText;
+        btnEl.disabled = false;
+        return;
+      }
+
+      showToast(`Appointment ${status.toLowerCase()} successfully!`);
+      loadAppointments(); // Refresh the list
+
+    } catch (err) {
+      console.error(err);
+      showToast('Server error', 'error');
+      btnEl.textContent = originalText;
+      btnEl.disabled = false;
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     VIEW APPOINTMENT DETAILS
+     ═══════════════════════════════════════════ */
+  async function viewAppointmentDetails(id, vehicleNumber, vehicleModel, ownerName, ownerEmail, dateStr, slot, serviceType, status, notes) {
+    const overlay = document.getElementById('detailModalOverlay');
+    const content = document.getElementById('detailContent');
+    const subtitle = document.getElementById('detailSubtitle');
+
+    subtitle.textContent = vehicleNumber + (vehicleModel ? ' — ' + vehicleModel : '');
+    overlay.style.display = 'flex';
+
+    // Status colors
+    const statusStyles = {
+      Pending: 'background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.3);',
+      Confirmed: 'background:rgba(52,211,153,0.15); color:#34d399; border:1px solid rgba(52,211,153,0.3);'
+    };
+    const statusIcons = { Pending: '⏳', Confirmed: '✅' };
+
+    content.innerHTML = `
+      <!-- Appointment Info -->
+      <div style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:20px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="font-size:15px; font-weight:700; color:var(--text-primary);">📌 Booking Information</div>
+          <span style="display:inline-flex; align-items:center; gap:4px; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; ${statusStyles[status] || ''}">${statusIcons[status] || ''} ${status}</span>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit. minmax(150px, 1fr)); gap:14px; font-size:13px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; font-weight:600; margin-bottom:4px;">Vehicle</div>
+              <div style="color:var(--text-primary); font-weight:600;">${vehicleNumber}</div>
+              <div style="color:var(--text-muted); font-size:12px;">${vehicleModel}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; font-weight:600; margin-bottom:4px;">Owner</div>
+              <div style="color:var(--text-primary); font-weight:500;">${ownerName}</div>
+              <div style="color:var(--text-muted); font-size:12px;">${ownerEmail}</div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-top:12px;">
+            <div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; font-weight:600; margin-bottom:4px;">📅 Date</div>
+              <div style="color:var(--text-primary); font-weight:500;">${dateStr}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; font-weight:600; margin-bottom:4px;">🕐 Slot</div>
+              <div style="color:var(--text-primary); font-weight:500;">${slot}</div>
+            </div>
+            <div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; font-weight:600; margin-bottom:4px;">🔧 Service</div>
+              <div style="color:var(--text-primary); font-weight:500;">${serviceType}</div>
+            </div>
+          </div>
+          ${notes ? '<div style="margin-top:14px; padding:10px 14px; background:rgba(255,255,255,0.03); border:1px solid var(--border-color); border-radius:8px; font-size:13px; color:var(--text-muted);"><strong>Customer Note:</strong> ' + notes + '</div>' : ''}
+        </div>
+      </div>
+
+      <!-- Loading service history -->
+      <div id="detailServiceHistory">
+        <div style="text-align:center; padding:24px; color:var(--text-muted);">
+          <div style="font-size:24px; animation:pulse 1.2s infinite;">⏳</div>
+          <p style="margin-top:8px; font-size:13px;">Loading service history...</p>
+        </div>
+      </div>
+    `;
+
+    // Fetch service history + cost for this vehicle
+    try {
+      const [servicesRes, costsRes] = await Promise.all([
+        fetch('/api/services/' + encodeURIComponent(vehicleNumber), { headers: { Authorization: 'Bearer ' + token } }),
+        fetch('/api/services/costs/' + encodeURIComponent(vehicleNumber), { headers: { Authorization: 'Bearer ' + token } })
+      ]);
+
+      const services = await servicesRes.json();
+      const costData = await costsRes.json();
+      const historyDiv = document.getElementById('detailServiceHistory');
+
+      if (!services.length) {
+        historyDiv.innerHTML = `
+          <div style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:20px; text-align:center;">
+            <div style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:16px;">🔧 Vehicle Service History</div>
+            <div style="color:var(--text-muted); font-size:14px; padding:20px;">📭 No service records found for this vehicle</div>
+          </div>
+        `;
+        return;
+      }
+
+      // Cost summary
+      let costHtml = `
+        <div style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:20px; margin-bottom:20px;">
+          <div style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:16px;">💰 Lifetime Cost Summary</div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:12px;">
+            <div style="background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.2); border-radius:8px; padding:14px; text-align:center;">
+              <div style="font-size:20px; font-weight:800; color:var(--accent-violet);">${costData.totalLifetimeCost.toFixed(2)}</div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-top:4px;">Total (LKR)</div>
+            </div>
+            <div style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.2); border-radius:8px; padding:14px; text-align:center;">
+              <div style="font-size:20px; font-weight:800; color:var(--accent-blue);">${costData.totalPartsCost.toFixed(2)}</div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-top:4px;">Parts (LKR)</div>
+            </div>
+            <div style="background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.2); border-radius:8px; padding:14px; text-align:center;">
+              <div style="font-size:20px; font-weight:800; color:var(--accent-emerald);">${costData.totalLaborCost.toFixed(2)}</div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-top:4px;">Labor (LKR)</div>
+            </div>
+            <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.2); border-radius:8px; padding:14px; text-align:center;">
+              <div style="font-size:20px; font-weight:800; color:var(--accent-amber);">${costData.serviceCount}</div>
+              <div style="font-size:11px; color:var(--text-muted); text-transform:uppercase; margin-top:4px;">Services</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Service records
+      let recordsHtml = '';
+      services.forEach(service => {
+        const mechanicName = service.mechanicId && service.mechanicId.name ? service.mechanicId.name : 'Unknown';
+        const sDate = new Date(service.serviceDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+        let itemsHtml = '';
+        service.items.forEach(i => {
+          const badge = i.action === 'Replaced'
+            ? '<span style="display:inline-flex; padding:1px 8px; border-radius:12px; font-size:10px; font-weight:600; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.25);">Replaced</span>'
+            : '<span style="display:inline-flex; padding:1px 8px; border-radius:12px; font-size:10px; font-weight:600; background:rgba(52,211,153,0.12); color:#34d399; border:1px solid rgba(52,211,153,0.2);">Checked</span>';
+          const costTag = i.partCost > 0 ? '<span style="margin-left:auto; font-size:11px; color:var(--accent-amber); font-weight:600;">' + i.partCost.toFixed(2) + ' LKR</span>' : '';
+
+          itemsHtml += '<div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:13px; color:var(--text-secondary);"><span style="color:var(--accent-cyan); font-size:10px;">▸</span> <strong>' + i.component + '</strong> ' + badge + ' <span style="font-size:11px; color:var(--text-muted); margin-left:8px;">Next: ' + i.nextCheckKm.toLocaleString() + ' km</span>' + costTag + '</div>';
+        });
+
+        recordsHtml += `
+          <div style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:8px; padding:16px; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border-color); flex-wrap:wrap; gap:8px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-weight:600; color:var(--accent-blue); font-size:13px;">📅 ${sDate}</span>
+                <span style="font-size:12px; color:var(--accent-violet); background:rgba(167,139,250,0.1); padding:2px 8px; border-radius:10px;">🔧 ${mechanicName}</span>
+              </div>
+              <span style="font-size:12px; color:var(--text-muted); background:rgba(56,189,248,0.1); padding:3px 10px; border-radius:12px;">${service.mileageAtService.toLocaleString()} km</span>
+            </div>
+            ${itemsHtml}
+            <div style="display:flex; gap:16px; margin-top:10px; padding-top:8px; border-top:1px solid var(--border-color); font-size:12px; color:var(--text-muted);">
+              <span>Parts: <strong style="color:var(--text-secondary);">${service.items.reduce((s,i) => s + (i.partCost||0), 0).toFixed(2)} LKR</strong></span>
+              <span>Labor: <strong style="color:var(--text-secondary);">${(service.laborCost||0).toFixed(2)} LKR</strong></span>
+              <span style="margin-left:auto;">Total: <strong style="color:var(--accent-amber);">${(service.totalCost||0).toFixed(2)} LKR</strong></span>
+            </div>
+          </div>
+        `;
+      });
+
+      historyDiv.innerHTML = `
+        ${costHtml}
+        <div style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:20px;">
+          <div style="font-size:15px; font-weight:700; color:var(--text-primary); margin-bottom:16px;">🔧 Service History (${services.length} records)</div>
+          ${recordsHtml}
+        </div>
+      `;
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('detailServiceHistory').innerHTML = '<div style="text-align:center; padding:20px; color:var(--accent-rose);">❌ Failed to load service history</div>';
+    }
+  }
+
+  function closeDetailModal() {
+    document.getElementById('detailModalOverlay').style.display = 'none';
+  }
+
+  // Close detail modal on overlay click
+  document.getElementById('detailModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeDetailModal();
+  });
 
   /* ── LOGOUT ── */
   function logout() {
