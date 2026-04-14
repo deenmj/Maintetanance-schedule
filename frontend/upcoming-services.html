@@ -480,6 +480,7 @@
         <div class="navbar-avatar" id="avatar">—</div>
         <span class="navbar-user-name" id="userName">—</span>
       </div>
+      <button onclick="openPasswordModal()" class="btn btn-ghost" style="font-size: 13px; padding: 8px 16px;">⚙️ Settings</button>
       <button onclick="logout()" class="btn btn-danger">Logout</button>
     </div>
   </nav>
@@ -603,6 +604,32 @@
   </div>
 </div>
 
+<!-- CHANGE PASSWORD MODAL -->
+<div id="passwordModalOverlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.65); backdrop-filter:blur(6px); z-index:500; align-items:center; justify-content:center; padding:24px;">
+  <div style="background:var(--bg-glass); border:1px solid var(--border-color); border-radius:var(--radius-lg); width:100%; max-width:400px; overflow:hidden; box-shadow:var(--shadow-lg); animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div style="padding:20px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02);">
+      <h3 style="margin:0; font-size:18px; color:var(--text-primary); font-weight:700;">⚙️ Change Password</h3>
+      <button onclick="closePasswordModal()" style="background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+    </div>
+
+    <div style="padding:24px;">
+      <div class="form-group">
+        <label class="form-label">Current Password</label>
+        <input id="currentPassword" type="password" class="form-input" placeholder="Enter current password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">New Password</label>
+        <input id="newPassword" type="password" class="form-input" placeholder="Enter new password">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm New Password</label>
+        <input id="confirmNewPassword" type="password" class="form-input" placeholder="Confirm new password">
+      </div>
+      <button id="btnChangePwd" onclick="changePassword()" class="btn btn-primary btn-full" style="margin-top: 8px;">Update Password</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div id="toast" class="toast"></div>
 
@@ -625,6 +652,63 @@
     toast.textContent = message;
     toast.className = 'toast ' + type + ' show';
     setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  /* ── CHANGE PASSWORD ── */
+  function openPasswordModal() {
+    document.getElementById('passwordModalOverlay').style.display = 'flex';
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmNewPassword').value = '';
+  }
+
+  function closePasswordModal() {
+    document.getElementById('passwordModalOverlay').style.display = 'none';
+  }
+
+  async function changePassword() {
+    const current = document.getElementById('currentPassword').value;
+    const newPwd = document.getElementById('newPassword').value;
+    const confirmPwd = document.getElementById('confirmNewPassword').value;
+    const btn = document.getElementById('btnChangePwd');
+
+    if (!current || !newPwd || !confirmPwd) {
+      showToast("All fields are required", "error");
+      return;
+    }
+    if (newPwd !== confirmPwd) {
+      showToast("New passwords do not match", "error");
+      return;
+    }
+
+    btn.textContent = "Updating...";
+    btn.disabled = true;
+
+    try {
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({ currentPassword: current, newPassword: newPwd })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        showToast(data.message || "Failed to change password", "error");
+      } else {
+        showToast("Password updated successfully!", "success");
+        setTimeout(() => {
+          closePasswordModal();
+        }, 1000);
+      }
+    } catch (err) {
+      showToast("Server error", "error");
+    }
+    
+    btn.textContent = "Update Password";
+    btn.disabled = false;
   }
 
   /* ── TAB SWITCHING ── */
