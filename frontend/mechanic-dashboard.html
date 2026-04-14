@@ -49,6 +49,9 @@
       <button class="tab-btn" onclick="switchTab('appointments')" id="tabAppointments">
         📅 Appointments
       </button>
+      <button class="tab-btn" onclick="switchTab('reminders')" id="tabReminders">
+        🔔 Customer Reminders
+      </button>
     </div>
 
     <!-- ═══════════════════════════════════════ -->
@@ -392,6 +395,25 @@
 
     </div>
 
+    <!-- ═══════════════════════════════════════ -->
+    <!-- TAB 4: CUSTOMER REMINDERS              -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tabContentReminders" style="display: none;">
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-header">
+          <div class="card-icon blue">🔔</div>
+          <div>
+            <div class="card-title">Customer Reminders</div>
+            <div class="card-description">Track all vehicles due for service and send email reminders</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="reminderStats" class="stats-grid" style="display: none; margin-bottom: 24px;"></div>
+
+      <div id="mechanicReminderList" class="space-y"></div>
+    </div>
+
   </div>
 
   <!-- APPOINTMENT DETAIL MODAL -->
@@ -459,16 +481,20 @@
     const recordTab = document.getElementById('tabContentRecord');
     const historyTab = document.getElementById('tabContentHistory');
     const appointmentsTab = document.getElementById('tabContentAppointments');
+    const remindersTab = document.getElementById('tabContentReminders');
     const btnRecord = document.getElementById('tabRecord');
     const btnHistory = document.getElementById('tabHistory');
     const btnAppointments = document.getElementById('tabAppointments');
+    const btnReminders = document.getElementById('tabReminders');
 
     recordTab.style.display = 'none';
     historyTab.style.display = 'none';
     appointmentsTab.style.display = 'none';
+    remindersTab.style.display = 'none';
     btnRecord.classList.remove('active');
     btnHistory.classList.remove('active');
     btnAppointments.classList.remove('active');
+    btnReminders.classList.remove('active');
 
     if (tab === 'record') {
       recordTab.style.display = 'block';
@@ -481,6 +507,10 @@
       appointmentsTab.style.display = 'block';
       btnAppointments.classList.add('active');
       loadAppointments();
+    } else if (tab === 'reminders') {
+      remindersTab.style.display = 'block';
+      btnReminders.classList.add('active');
+      loadMechanicReminders();
     }
   }
 
@@ -1198,6 +1228,193 @@
   document.getElementById('detailModalOverlay').addEventListener('click', function(e) {
     if (e.target === this) closeDetailModal();
   });
+
+  /* ═══════════════════════════════════════════
+     CUSTOMER REMINDERS (MECHANIC)
+     ═══════════════════════════════════════════ */
+  async function loadMechanicReminders() {
+    const listDiv = document.getElementById('mechanicReminderList');
+    const statsDiv = document.getElementById('reminderStats');
+
+    listDiv.innerHTML = `
+      <div class="empty-state" style="padding: 32px;">
+        <div class="icon" style="animation: pulse 1.2s infinite;">⏳</div>
+        <p>Loading vehicles...</p>
+      </div>
+    `;
+
+    try {
+      const res = await fetch('/api/reminders/all', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const reminders = await res.json();
+
+      if (!reminders.length) {
+        statsDiv.style.display = 'none';
+        listDiv.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No vehicles found in the system</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Calculate stats
+      let overdueCount = 0, dueSoonCount = 0, goodCount = 0;
+      reminders.forEach(r => {
+        if (r.status === 'overdue') overdueCount++;
+        else if (r.status === 'due-soon') dueSoonCount++;
+        else if (r.status === 'good') goodCount++;
+      });
+
+      statsDiv.style.display = 'grid';
+      statsDiv.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-value">${reminders.length}</div>
+          <div class="stat-label">Total Vehicles</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-danger); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${overdueCount}</div>
+          <div class="stat-label">Overdue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="background: var(--gradient-warm); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${dueSoonCount}</div>
+          <div class="stat-label">Due Soon</div>
+        </div>
+      `;
+
+      // Sort: overdue first, then due-soon, then good, then no-records
+      const order = { 'overdue': 0, 'due-soon': 1, 'good': 2, 'no-records': 3 };
+      reminders.sort((a, b) => order[a.status] - order[b.status]);
+
+      listDiv.innerHTML = '';
+      reminders.forEach((r, idx) => {
+        const statusLabel = {
+          'overdue': 'Overdue',
+          'due-soon': 'Due Soon',
+          'good': 'On Track',
+          'no-records': 'No Records'
+        }[r.status];
+
+        const statusIcon = {
+          'overdue': '🔴',
+          'due-soon': '🟡',
+          'good': '🟢',
+          'no-records': '⚪'
+        }[r.status];
+
+        const statusStyle = {
+          'overdue': 'background: rgba(251,113,133,0.15); color: #fb7185; border: 1px solid rgba(251,113,133,0.3);',
+          'due-soon': 'background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3);',
+          'good': 'background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3);',
+          'no-records': 'background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3);'
+        }[r.status];
+
+        // Info grid
+        let infoRowHtml = '';
+        if (r.status !== 'no-records') {
+          const nextKm = r.nextServiceKm ? r.nextServiceKm.toLocaleString() + ' km' : '—';
+          const nextDate = r.nextServiceDate ? new Date(r.nextServiceDate).toLocaleDateString('en-GB') : '—';
+          const kmRem = r.kmRemaining !== null ? (r.kmRemaining < 0 ? \`Overdue by \${Math.abs(r.kmRemaining).toLocaleString()} km\` : \`\${r.kmRemaining.toLocaleString()} km left\`) : '—';
+          const dayRem = r.daysRemaining !== null ? (r.daysRemaining < 0 ? \`\${Math.abs(r.daysRemaining)} days overdue\` : \`\${r.daysRemaining} days left\`) : '—';
+
+          infoRowHtml = `
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; font-size: 13px;">
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">Next Service At</div>
+                <div style="color: var(--text-primary); font-weight: 500;">\${nextKm}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">Milestone Status</div>
+                <div style="color: \${r.kmRemaining < 0 ? '#fb7185' : 'var(--text-primary)'}; font-weight: 500;">\${kmRem}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">Next Service Date</div>
+                <div style="color: var(--text-primary); font-weight: 500;">\${nextDate}</div>
+              </div>
+              <div>
+                <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; margin-bottom: 4px;">Date Status</div>
+                <div style="color: \${r.daysRemaining < 0 ? '#fb7185' : 'var(--text-primary)'}; font-weight: 500;">\${dayRem}</div>
+              </div>
+            </div>
+          `;
+        }
+
+        const sentBadge = r.reminderSent 
+          ? '<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:12px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.2); color:#34d399; font-size:10px; font-weight:600; margin-left:8px;">✅ Reminder Sent</span>' 
+          : '';
+
+        listDiv.innerHTML += `
+          <div class="history-card" style="animation-delay: \${idx * 0.05}s; border-left: 3px solid \${r.status === 'overdue' ? '#fb7185' : r.status === 'due-soon' ? '#fbbf24' : r.status === 'good' ? '#34d399' : '#64748b'};">
+            <div class="history-header">
+              <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span class="vehicle-badge">\${r.vehicleNumber}</span>
+                <span style="font-size: 13px; color: var(--text-muted);">\${r.model || ''}</span>
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; \${statusStyle}">\${statusIcon} \${statusLabel}</span>
+                \${sentBadge}
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">\${r.ownerName}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">\${r.ownerEmail}</div>
+              </div>
+            </div>
+
+            \${infoRowHtml}
+
+            \${r.status !== 'no-records' ? \`
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button onclick="sendMechanicReminder('\${r.vehicleNumber}', this)" class="btn" style="background: rgba(56, 189, 248, 0.12); color: var(--accent-blue); border: 1px solid rgba(56, 189, 248, 0.25); padding: 8px 16px; font-size: 12px;">\${r.reminderSent ? '📧 Send Reminder Again' : '📧 Send Reminder Email'}</button>
+            </div>
+            \` : ''}
+          </div>
+        `;
+      });
+
+    } catch (err) {
+      console.error(err);
+      listDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">❌</div>
+          <p>Failed to load reminders</p>
+        </div>
+      `;
+      showToast('Failed to load reminders', 'error');
+    }
+  }
+
+  /* ── SEND REMINDER (Mechanic) ── */
+  async function sendMechanicReminder(vehicleNumber, btnEl) {
+    const originalText = btnEl.textContent;
+    btnEl.textContent = "Sending...";
+    btnEl.disabled = true;
+
+    try {
+      const res = await fetch(\`/api/reminders/send/\${vehicleNumber}\`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + token
+        }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.message || "Failed to send reminder", "error");
+      } else {
+        showToast(data.message || "Reminder sent successfully!", "success");
+        // Reload list to update the "Reminder Sent" badge
+        loadMechanicReminders();
+      }
+
+    } catch (err) {
+      console.error(err);
+      showToast("Server error", "error");
+    }
+
+    btnEl.textContent = originalText;
+    btnEl.disabled = false;
+  }
 
   /* ── LOGOUT ── */
   function logout() {

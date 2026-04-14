@@ -54,6 +54,10 @@ const serviceSchema = new mongoose.Schema({
   },
   nextServiceDate: {
     type: Date
+  },
+  reminderSent: {
+    type: Boolean,
+    default: false
   }
 });
 

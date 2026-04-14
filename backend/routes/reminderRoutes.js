@@ -4,18 +4,18 @@ const Vehicle = require("../models/vehicle");
 const User = require("../models/user");
 const auth = require("../middleware/authMiddleware");
 const ownerOnly = require("../middleware/ownerOnly");
+const mechanicOnly = require("../middleware/mechanicOnly");
 const nodemailer = require("nodemailer");
 
 const router = express.Router();
 
 /* ===============================
-   GET /api/reminders/my
-   Owner's upcoming service reminders
+   GET /api/reminders/all
+   ALL vehicles with reminders (Mechanic only)
 ================================ */
-router.get("/my", auth, ownerOnly, async (req, res) => {
+router.get("/all", auth, mechanicOnly, async (req, res) => {
   try {
-    // Get all vehicles belonging to this owner
-    const vehicles = await Vehicle.find({ ownerId: req.user.userId });
+    const vehicles = await Vehicle.find().populate("ownerId", "name email");
 
     if (!vehicles.length) {
       return res.json([]);
@@ -24,22 +24,28 @@ router.get("/my", auth, ownerOnly, async (req, res) => {
     const reminders = [];
 
     for (const vehicle of vehicles) {
-      // Get the latest service for this vehicle
       const latestService = await Service.findOne({ vehicleNumber: vehicle.vehicleNumber })
         .sort({ serviceDate: -1 });
+
+      const ownerName = vehicle.ownerId && vehicle.ownerId.name ? vehicle.ownerId.name : "Unknown";
+      const ownerEmail = vehicle.ownerId && vehicle.ownerId.email ? vehicle.ownerId.email : "";
 
       const reminder = {
         vehicleNumber: vehicle.vehicleNumber,
         model: vehicle.model,
         year: vehicle.year,
         currentMileage: vehicle.mileage,
+        ownerName,
+        ownerEmail,
+        ownerId: vehicle.ownerId ? vehicle.ownerId._id : null,
         lastServiceDate: null,
         lastServiceMileage: null,
         nextServiceKm: null,
         nextServiceDate: null,
         kmRemaining: null,
         daysRemaining: null,
-        status: "no-records", // no-records, overdue, due-soon, good
+        status: "no-records",
+        reminderSent: false,
         components: []
       };
 
@@ -48,13 +54,12 @@ router.get("/my", auth, ownerOnly, async (req, res) => {
         reminder.lastServiceMileage = latestService.mileageAtService;
         reminder.nextServiceKm = latestService.nextServiceKm;
         reminder.nextServiceDate = latestService.nextServiceDate;
+        reminder.reminderSent = latestService.reminderSent || false;
 
-        // Calculate KM remaining
         if (latestService.nextServiceKm) {
           reminder.kmRemaining = latestService.nextServiceKm - vehicle.mileage;
         }
 
-        // Calculate days remaining
         if (latestService.nextServiceDate) {
           const now = new Date();
           const nextDate = new Date(latestService.nextServiceDate);
@@ -62,7 +67,6 @@ router.get("/my", auth, ownerOnly, async (req, res) => {
           reminder.daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
         }
 
-        // Determine status
         if (reminder.kmRemaining !== null && reminder.kmRemaining < 0) {
           reminder.status = "overdue";
         } else if (reminder.daysRemaining !== null && reminder.daysRemaining < 0) {
@@ -76,7 +80,6 @@ router.get("/my", auth, ownerOnly, async (req, res) => {
           reminder.status = "good";
         }
 
-        // Include component-level details from latest service
         reminder.components = latestService.items.map(item => ({
           component: item.component,
           action: item.action,
@@ -102,27 +105,109 @@ router.get("/my", auth, ownerOnly, async (req, res) => {
 });
 
 /* ===============================
-   POST /api/reminders/send
-   Send email reminder to owner
+   GET /api/reminders/my
+   Owner's own vehicle reminders
 ================================ */
-router.post("/send", auth, ownerOnly, async (req, res) => {
+router.get("/my", auth, ownerOnly, async (req, res) => {
   try {
-    const { vehicleNumber } = req.body;
+    const vehicles = await Vehicle.find({ ownerId: req.user.userId });
 
-    if (!vehicleNumber) {
-      return res.status(400).json({ message: "Vehicle number is required" });
+    if (!vehicles.length) {
+      return res.json([]);
     }
 
-    // Get the owner info
-    const owner = await User.findById(req.user.userId);
-    if (!owner) {
-      return res.status(404).json({ message: "User not found" });
+    const reminders = [];
+
+    for (const vehicle of vehicles) {
+      const latestService = await Service.findOne({ vehicleNumber: vehicle.vehicleNumber })
+        .sort({ serviceDate: -1 });
+
+      const reminder = {
+        vehicleNumber: vehicle.vehicleNumber,
+        model: vehicle.model,
+        year: vehicle.year,
+        currentMileage: vehicle.mileage,
+        lastServiceDate: null,
+        lastServiceMileage: null,
+        nextServiceKm: null,
+        nextServiceDate: null,
+        kmRemaining: null,
+        daysRemaining: null,
+        status: "no-records",
+        components: []
+      };
+
+      if (latestService) {
+        reminder.lastServiceDate = latestService.serviceDate;
+        reminder.lastServiceMileage = latestService.mileageAtService;
+        reminder.nextServiceKm = latestService.nextServiceKm;
+        reminder.nextServiceDate = latestService.nextServiceDate;
+
+        if (latestService.nextServiceKm) {
+          reminder.kmRemaining = latestService.nextServiceKm - vehicle.mileage;
+        }
+
+        if (latestService.nextServiceDate) {
+          const now = new Date();
+          const nextDate = new Date(latestService.nextServiceDate);
+          const diffMs = nextDate - now;
+          reminder.daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        }
+
+        if (reminder.kmRemaining !== null && reminder.kmRemaining < 0) {
+          reminder.status = "overdue";
+        } else if (reminder.daysRemaining !== null && reminder.daysRemaining < 0) {
+          reminder.status = "overdue";
+        } else if (
+          (reminder.kmRemaining !== null && reminder.kmRemaining <= 1000) ||
+          (reminder.daysRemaining !== null && reminder.daysRemaining <= 30)
+        ) {
+          reminder.status = "due-soon";
+        } else {
+          reminder.status = "good";
+        }
+
+        reminder.components = latestService.items.map(item => ({
+          component: item.component,
+          action: item.action,
+          nextCheckKm: item.nextCheckKm,
+          kmRemaining: item.nextCheckKm - vehicle.mileage,
+          status: (item.nextCheckKm - vehicle.mileage) < 0
+            ? "overdue"
+            : (item.nextCheckKm - vehicle.mileage) <= 1000
+              ? "due-soon"
+              : "good"
+        }));
+      }
+
+      reminders.push(reminder);
     }
 
-    // Get vehicle info
-    const vehicle = await Vehicle.findOne({ vehicleNumber, ownerId: req.user.userId });
+    res.json(reminders);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to load reminders" });
+  }
+});
+
+/* ===============================
+   POST /api/reminders/send/:vehicleNumber
+   Send email reminder (MECHANIC ONLY)
+================================ */
+router.post("/send/:vehicleNumber", auth, mechanicOnly, async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params;
+
+    // Get vehicle with owner info
+    const vehicle = await Vehicle.findOne({ vehicleNumber }).populate("ownerId", "name email");
     if (!vehicle) {
       return res.status(404).json({ message: "Vehicle not found" });
+    }
+
+    const owner = vehicle.ownerId;
+    if (!owner) {
+      return res.status(404).json({ message: "Vehicle owner not found" });
     }
 
     // Get the latest service
@@ -192,7 +277,7 @@ router.post("/send", auth, ownerOnly, async (req, res) => {
             Hello <strong>${owner.name}</strong>,
           </p>
           <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-            This is a reminder about an upcoming service for your vehicle. Please review the details below and schedule your appointment at your earliest convenience.
+            This is a friendly reminder from <strong>ABC Fleet Maintenance</strong> about an upcoming service for your vehicle. Please review the details below and schedule your appointment at your earliest convenience.
           </p>
 
           <!-- Vehicle Info Card -->
@@ -238,7 +323,7 @@ router.post("/send", auth, ownerOnly, async (req, res) => {
           </table>
 
           <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-            Please book a service appointment through our system or contact us directly.
+            Please book a service appointment through our system or contact us directly to keep your vehicle running safely.
           </p>
 
           <!-- CTA -->
@@ -250,13 +335,13 @@ router.post("/send", auth, ownerOnly, async (req, res) => {
         <!-- Footer -->
         <div style="background: #f1f5f9; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
           <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-            © ${new Date().getFullYear()} ABC Fleet Maintenance · This is an automated reminder
+            © ${new Date().getFullYear()} ABC Fleet Maintenance · Sent by mechanic on your behalf
           </p>
         </div>
       </div>
     `;
 
-    // Create transporter - uses environment variables
+    // Create transporter
     const transporter = nodemailer.createTransport({
       service: process.env.EMAIL_SERVICE || "gmail",
       auth: {
@@ -267,11 +352,15 @@ router.post("/send", auth, ownerOnly, async (req, res) => {
 
     // Check if email credentials are configured
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      // If no email configured, still return success but note it
       console.log("⚠️  Email not configured. Set EMAIL_USER and EMAIL_PASS in .env");
       console.log("📧 Email would have been sent to:", owner.email);
+
+      // Mark reminder as sent even in preview mode
+      latestService.reminderSent = true;
+      await latestService.save();
+
       return res.json({
-        message: "Reminder generated successfully (email not configured — set EMAIL_USER and EMAIL_PASS in .env)",
+        message: "Reminder generated (email not configured — set EMAIL_USER & EMAIL_PASS in .env)",
         emailPreview: true,
         to: owner.email,
         subject: `🔧 Service Reminder: ${vehicle.vehicleNumber} — ${statusText}`
@@ -285,6 +374,10 @@ router.post("/send", auth, ownerOnly, async (req, res) => {
       subject: `🔧 Service Reminder: ${vehicle.vehicleNumber} — ${statusText}`,
       html: emailHtml
     });
+
+    // Mark reminder as sent
+    latestService.reminderSent = true;
+    await latestService.save();
 
     console.log(`📧 Reminder email sent to ${owner.email} for ${vehicleNumber}`);
 

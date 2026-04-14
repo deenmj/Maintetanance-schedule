@@ -813,7 +813,6 @@
               ${componentsHtml}
             </div>
             <div class="reminder-card-actions">
-              ${r.status !== "no-records" ? `<button class="btn-reminder btn-email" onclick="sendReminder('${r.vehicleNumber}', this)">📧 Send Reminder Email</button>` : ""}
               <button class="btn-reminder btn-book" onclick="openBookingModal('${r.vehicleNumber}', '${(r.model || "").replace(/'/g, "\\'")}')">📅 Book Service Slot</button>
             </div>
           </div>
@@ -832,38 +831,7 @@
     }
   }
 
-  /* ── SEND REMINDER EMAIL ── */
-  async function sendReminder(vehicleNumber, btnEl) {
-    const originalText = btnEl.textContent;
-    btnEl.textContent = "Sending...";
-    btnEl.disabled = true;
 
-    try {
-      const res = await fetch("/api/reminders/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token
-        },
-        body: JSON.stringify({ vehicleNumber })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        showToast(data.message || "Failed to send reminder", "error");
-      } else {
-        showToast(data.message || "Reminder sent!", "success");
-      }
-
-    } catch (err) {
-      console.error(err);
-      showToast("Server error", "error");
-    }
-
-    btnEl.textContent = originalText;
-    btnEl.disabled = false;
-  }
 
   /* ═══════════════════════════════════════════
      BOOKING MODAL
