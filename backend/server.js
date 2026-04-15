@@ -9,6 +9,7 @@ const vehicleRoutes = require("./routes/vehicleRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const reminderRoutes = require("./routes/reminderRoutes");
 const appointmentRoutes = require("./routes/appointmentRoutes");
+const { initScheduler } = require("./utils/scheduler");
 
 const app = express();
 
@@ -41,5 +42,6 @@ mongoose.connect(process.env.MONGO_URI)
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  initScheduler(); // Start the automated reminder scanner
 });
 // Nodemon trigger

@@ -324,6 +324,17 @@
         else okCount++;
       });
 
+      // Time-based check (6 months)
+      if (latestService.nextServiceDate) {
+        const now = new Date();
+        const nextDate = new Date(latestService.nextServiceDate);
+        const diffMs = nextDate - now;
+        const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        
+        if (daysRemaining < 0) overdueCount++;
+        else if (daysRemaining <= 30) soonCount++;
+      }
+
       statsGrid.style.display = "grid";
       statsGrid.innerHTML = `
         <div class="stat-card">
@@ -405,6 +416,39 @@
           </div>
         `;
       });
+      
+      // ── TIME-BASED REMINDER (6 MONTHS) ──
+      if (latestService.nextServiceDate) {
+        const nextDate = new Date(latestService.nextServiceDate);
+        const now = new Date();
+        const diffMs = nextDate - now;
+        const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        
+        let alertClass, alertIcon, message;
+        if (daysRemaining < 0) {
+          alertClass = "danger";
+          alertIcon = "🗓️";
+          message = `Periodic maintenance overdue by ${Math.abs(daysRemaining)} days`;
+        } else if (daysRemaining <= 30) {
+          alertClass = "warning";
+          alertIcon = "🗓️";
+          message = `Periodic maintenance due in ${daysRemaining} days`;
+        } else {
+          alertClass = "success";
+          alertIcon = "🗓️";
+          message = `Periodic maintenance on track (Due in ${daysRemaining} days)`;
+        }
+
+        alertsDiv.insertAdjacentHTML('afterbegin', `
+          <div class="alert-box ${alertClass}" style="border-bottom: 2px solid var(--border-color); margin-bottom: 16px;">
+            <span class="alert-icon">${alertIcon}</span>
+            <div class="alert-content">
+              <div class="alert-title">6-Month Service Interval</div>
+              <div class="alert-meta">${message} · Next Check: ${nextDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</div>
+            </div>
+          </div>
+        `);
+      }
 
       /* ── SERVICE HISTORY (with costs) ── */
       document.getElementById("historySection").style.display = "block";
