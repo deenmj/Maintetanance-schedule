@@ -326,6 +326,38 @@ body::before {
   padding-right: 36px;
 }
 
+/* Password Toggle */
+.password-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-group .form-input {
+  padding-right: 44px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: var(--accent-blue);
+  background: rgba(56, 189, 248, 0.1);
+}
+
 .form-select option {
   background: var(--bg-secondary);
   color: var(--text-primary);
